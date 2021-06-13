@@ -1,4 +1,4 @@
-# DMG_EMU rs
+# dmg-eum-rs
 
 ![Image of the emulator window showing the nintendo logo](markdown/emulator.PNG)
 ## Instal
@@ -9,7 +9,7 @@ Place roms in the `resources` folder.
 
 `cargo run "name_or_rom.gb"`
 
-If not name is supplied the emulator will try to run the boot rom named `DMG_ROM.bin` which is not provided for obviouse reasons. It also tries to read the nintendo logo from `nintendo_logo.txt` which, you guessed it, is also not provided.
+If no name is supplied the emulator will try to run the boot rom named `DMG_ROM.bin` which is not provided for obviouse reasons. It also tries to read the nintendo logo from `nintendo_logo.txt` which, you guessed it, is also not provided.
 ## Design notes
 
 ### EMU
@@ -75,7 +75,7 @@ The Input and Display modules are expected to plugin to the emulator. The base e
 
 The binary threads the winit window and the emulator seperately so that the emulator can block on a breakpoint without preventing the window from resiving, moving, or changing monitors. 
 
-### Testing
+## Testing
 
  - Blarggs Tests
    - 01-special all but last ⚠
@@ -85,3 +85,17 @@ The binary threads the winit window and the emulator seperately so that the emul
  - dmg-acid2
    - bottom of eyes is drawn incorrectly ❌
    - Everything else ✔
+
+
+## Future
+
+- Fix CPU bugs
+- Implement Timer
+- Add winit keyboard input
+- Play Tetris
+- Implement memory switching roms
+- Pass all of Blarggs tests
+- Play Pokemon Blue / Green / Red / Yellow
+- Add tests to a Github Actions routine
+- Port to wasm
+- Implement a vs-code custom editor that will build and run roms in the editor. (Fully integrated educational gameboy dev kit)
