@@ -1,5 +1,15 @@
 # DMG_EMU rs
 
+![Image of the emulator window showing the nintendo logo](markdown/emulator.png)
+## Instalation
+
+Place roms in the `resources` folder.
+
+`cargo build`
+
+`cargo run "name_or_rom.gb"`
+
+If not name is supplied the emulator will try to run the boot rom named `DMG_ROM.bin` which is not provided for obviouse reasons. It also tries to read the nintendo logo from `nintendo_logo.txt` which, you guessed it, is also not provided.
 ## Design notes
 
 ### EMU
@@ -43,6 +53,8 @@ For each machine cycle the PPU will push two pixels and grab the next tile row, 
 The MMU is primarely responsible for mapping the variouse memory modules and devices to their addresses. It is passed into the cpu and ppu so they can read and write to it.
 
 ### Debug
+
+![Debug Panel Image](markdown/debug.png)
 
 Debugging a rom is done in the console. The state of the emulator is dumped to the console when a breakpoint is reached. Current;y breakpoints must be set in the binary but hopefully I'll come up with something else. 
 
