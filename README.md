@@ -1,6 +1,6 @@
 # DMG_EMU rs
 
-![Image of the emulator window showing the nintendo logo](markdown/emulator.png)
+![Image of the emulator window showing the nintendo logo](markdown/emulator.PNG)
 ## Instalation
 
 Place roms in the `resources` folder.
