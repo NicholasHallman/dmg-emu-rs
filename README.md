@@ -62,7 +62,7 @@ When in the debugging you can use:
 - n To tick the emulator till the next line is reached
 - x To remove a breakpoint from the current line
 - : To move the memory debug to an address
-- + To add a breakpoint to a line
+- \+ To add a breakpoint to a line
 - c To continue execution
 - arrow up To scroll the memory debug up a line
 - arrow down To scroll the memory debug down a line
@@ -92,6 +92,7 @@ The binary threads the winit window and the emulator seperately so that the emul
 - Fix CPU bugs
 - Implement Timer
 - Add winit keyboard input
+- Add sound
 - Play Tetris
 - Implement memory switching roms
 - Pass all of Blarggs tests
