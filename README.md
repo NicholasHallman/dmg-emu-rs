@@ -59,13 +59,13 @@ The MMU is primarely responsible for mapping the variouse memory modules and dev
 Debugging a rom is done in the console. The state of the emulator is dumped to the console when a breakpoint is reached. Current;y breakpoints must be set in the binary but hopefully I'll come up with something else. 
 
 When in the debugging you can use:
-- n To tick the emulator till the next line is reached
-- x To remove a breakpoint from the current line
-- : To move the memory debug to an address
-- \+ To add a breakpoint to a line
-- c To continue execution
-- arrow up To scroll the memory debug up a line
-- arrow down To scroll the memory debug down a line
+- `n` To tick the emulator till the next line is reached
+- `x` To remove a breakpoint from the current line
+- `:` To move the memory debug to an address
+- `+` To add a breakpoint to a line
+- `c` To continue execution
+- `⬆` To scroll the memory debug up a line
+- `⬇` To scroll the memory debug down a line
 
 ### Modules
 
