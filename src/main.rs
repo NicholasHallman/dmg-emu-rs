@@ -84,13 +84,13 @@ fn main() {
                 emu.cpu.SP = 0xFFFE;
                 emu.cpu.set_byte_reg(&dmg_emu::cpu::HalfReg::A, 1);
 
-                emu.debug.add_pc_breakpoint(0x0100);
+                emu.debug.add_pc_breakpoint(0x02A9);
                 //emu.debug.add_pc_breakpoint(0x48);
                 //emu.debug.add_pc_breakpoint(0xC35C);
             },
             None => {
                 emu.load_boot_rom();
-                emu.debug.add_pc_breakpoint(0x008B);
+                //emu.debug.add_pc_breakpoint(0x0000);
                 // emu.debug.add_breakpoint(6);
                 // emu.debug.add_breakpoint(28);
                 // emu.debug.add_breakpoint(0x3F);
@@ -132,7 +132,7 @@ fn main() {
                 emu.tick();
             }
     
-            // let the window thread now that we need to redraw
+            // let the window thread know that we need to redraw
             emu_sender.send(EmuStatus::Draw).unwrap();
             if should_die {break;}
         });

@@ -55,12 +55,14 @@ impl Ppu {
     }
 
     pub fn tick(&mut self, mem: &mut Mem) {
+        mem.ppu_access = true;
         match self.mode {
             PPUMode::OAMSearch => self.oam_search(mem),
             PPUMode::PixelTransfer => self.pixel_transfer(mem),
             PPUMode::HBlank => self.h_blank(mem),
             PPUMode::VBlank => self.v_blank(mem)
-        }
+        };
+        mem.ppu_access = false;
     }
 
     pub fn draw(&self, frame: &mut [u8]) {
@@ -91,6 +93,11 @@ impl Ppu {
         let oa_y = mem.get(curr_o_addr);
         let oa_height :u8 = if (mem.get(0xFF40) & 4) == 4 {16} else {8};
         let y = mem.get(0xFF44);
+
+        if oa_y >= 160 {
+            self.current_o += 1;
+            return;
+        }
 
         let is_below_top = oa_y + oa_height >= 16;
         let is_on_current_ly = oa_y <= y + 16 && oa_y + oa_height > y + 16;
@@ -167,7 +174,7 @@ impl Ppu {
         if self.cycles == 456 {
             self.cycles = 0;
             let ly = mem.get(0xFF44) + 1;
-            mem.set(0xFF44, ly);
+            mem.set_ly(ly);
             if ly == 144 {
                 self.ready = true;
                 self.mode = PPUMode::VBlank;
@@ -187,10 +194,10 @@ impl Ppu {
         if self.cycles == 456 {
             self.cycles = 0;
             let ly = mem.get(0xFF44) + 1;
-            mem.set(0xFF44, ly);
+            mem.set_ly(ly);
             if ly == 153 {
                 self.fetcher.reset_win();
-                mem.set(0xFF44, 0);
+                mem.set_ly(0);
                 self.prep_oam_search(mem);
 
                 // keep track of elapsed time
@@ -313,7 +320,7 @@ impl Fetcher {
                 }
             };
             
-            if (o_x - 8) == current_x {
+            if o_x == current_x + 8 {
                 // ob_fifo.clear();
                 // get the sprite data
                 let tile_num: u16 = {
@@ -365,6 +372,12 @@ impl Fetcher {
     pub fn win_or_back(&mut self, mem: &Mem, x: u8, fifo: &mut Fifo) {
         let w_x = mem.get(0xFF4B);
         let w_y = mem.get(0xFF4A);
+
+        if w_y > 143 || w_x > 166 {
+            self.bg = BgWin::Background;
+            return;
+        }
+
         let w_on = self.get_win_enabled(mem) && w_x != 0;
         let ly = mem.get(0xFF44);
 

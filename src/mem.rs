@@ -19,9 +19,14 @@ pub struct Mem {
     obp1: u8,
     wy: u8,
     wx: u8,
-
+    // DMA
+    pub transfering: bool,
+    transfer_count: u16,
+    // IO
     serial: Serial,
-    joypad: Joypad
+    joypad: Joypad,
+
+    pub ppu_access: bool
 
 }
 
@@ -45,14 +50,25 @@ impl Mem {
             wy: 0,
             wx: 0,
 
+            transfering: false,
+            transfer_count: 0,
+
             serial: Serial::new(),
             joypad: Joypad::new(),
+
+            ppu_access: false
         }
     }
 
     pub fn get(&self, addr: u16) -> u8 {
+        if self.transfering && !self.ppu_access { // can only access high ram
+            return match addr {
+                0xFF80..=0xFFFE => self.mem[addr as usize],
+                _ => 0xFF
+            }
+        }
         match addr {
-            P1_ADDR => self.joypad.read(),
+            P1_ADDR => 0xFF,
             0xFFFF => self.ienable,
             0xFF0F => self.iflag,
 
@@ -76,6 +92,19 @@ impl Mem {
         }
     }
 
+    pub fn set_ly(&mut self, value: u8) {
+        self.ly = value;
+        if value == 255 {
+            println!("???");
+        }
+        if self.ly == self.lyc {
+            self.set_lcd_stat(2, 1);
+            self.iflag |= 0x2;
+        } else {
+            self.set_lcd_stat(2, 0);
+        }
+    }
+
     pub fn set(&mut self, addr: u16, value: u8) {
         match addr {
             P1_ADDR => self.joypad.write(value),
@@ -85,15 +114,6 @@ impl Mem {
             0xFF41 => self.LCDStatus = value,
             0xFF42 => self.scrolly = value,
             0xFF43 => self.scrollx = value,
-            0xFF44 => {
-                self.ly = value;
-                if self.ly == self.lyc {
-                    self.set_lcd_stat(2, 1);
-                    self.iflag |= 0x2;
-                } else {
-                    self.set_lcd_stat(2, 0);
-                }
-            },
             0xFF45 => {
                 self.lyc = value;
                 if self.ly == self.lyc {
@@ -102,7 +122,10 @@ impl Mem {
                     self.set_lcd_stat(2, 0);
                 }
             },
-            0xFF46 => self.dma = value,
+            0xFF46 => {
+                self.dma = value;
+                self.dma_transfer();
+            },
             0xFF47 => self.bgp = value,
             0xFF48 => self.obp0 = value,
             0xFF49 => self.obp1 = value,
@@ -113,6 +136,27 @@ impl Mem {
             0xFFFF => self.ienable = value,
             _ => self.mem[addr as usize] = value,
         };
+    }
+
+    pub fn dma_transfer(&mut self) {
+        if self.transfer_count == 159 {
+            self.transfer_count = 0;
+            self.transfering = false;
+            return;
+        }
+
+        let start_addr = 0xFE00;
+        let cur_addr = start_addr + self.transfer_count;
+
+        let from_addr = (self.dma as u16) << 8;
+        let cur_from = from_addr + self.transfer_count;
+
+        self.set(
+            cur_addr,
+            self.get(cur_from)
+        );
+        self.transfer_count += 1;
+        self.transfering = true;
     }
 
     pub fn set_lcd_stat(&mut self, bit: u8, v: u8) {

@@ -116,7 +116,7 @@ impl Cpu {
     }
 
     pub fn tick(&mut self, mem: &mut Mem) {
-
+        
         match self.current_cycle { 
             1 => { // start decoding new op
                 self.current_op = self.get_op(mem);
