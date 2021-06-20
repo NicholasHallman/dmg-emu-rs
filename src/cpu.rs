@@ -872,10 +872,6 @@ impl Cpu {
             2 => {
                 let value = self.get_word_reg(reg);
                 let result = value.wrapping_add(1);
-                match reg {
-                    &Reg::SP => println!("INC SP: BEFORE {} AFTER {}", value, result),
-                    _ => ()
-                };
 
                 self.set_word_reg(reg, result);
                 self.reset()

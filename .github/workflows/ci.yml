@@ -40,9 +40,6 @@ jobs:
         with:
           repository: 'retrio/gb-test-roms'
           path: './resources'
-      
-      - name: Print Folder Structure
-        run: tree ./resources
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1

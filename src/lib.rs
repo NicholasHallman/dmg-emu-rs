@@ -74,9 +74,8 @@ impl Emu {
     }
 
     pub fn load_rom<S: Into<String>>(&mut self, name: S) {
-        let msg = format!("./resources/{}", &name.into());
-        println!("ROM PATH: {}", msg);
-        let boot_rom = &fs::read(msg).expect("File Not Found");
+        let path = format!("./resources/{}", &name.into());
+        let boot_rom = &fs::read(path).expect("File Not Found");
         let mut i: u16 = 0;
         for instruction in boot_rom {
             self.mem.set(i, *instruction);
