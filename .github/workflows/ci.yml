@@ -50,6 +50,7 @@ jobs:
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
-        continue-on-error: true  # WARNING: only for this example, remove it!
         with:
           command: test
+        env: 
+          TEST_ROM_PATH: "gb-test-roms/cpu_instrs/individual/"
