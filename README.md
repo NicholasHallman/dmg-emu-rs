@@ -1,5 +1,7 @@
 # dmg-eum-rs
 
+![All Tests](https://github.com/NicholasHallman/dmg-emu-rs/actions/workflows/ci.yml/badge.svg)
+
 ![Image of the emulator window showing the nintendo logo](markdown/emulator.PNG)
 ## Install
 

@@ -35,7 +35,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Checkout Blarggs
+      - name: Checkout Blargg's ROMs
         uses: actions/checkout@v2
         with:
           repository: 'retrio/gb-test-roms'
@@ -49,9 +49,6 @@ jobs:
           override: true
 
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: blargg_cpu_test
+        run: cargo test blargg_cpu_test
         env: 
           TEST_ROM_PATH: "cpu_instrs/individual/"
