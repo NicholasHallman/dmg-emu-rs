@@ -85,8 +85,8 @@ fn main() {
                 emu.cpu.SP = 0xFFFE;
                 emu.cpu.AF = 0x1180;
 
-                //emu.debug.add_pc_breakpoint(0x0100);
-                //emu.debug.add_pc_breakpoint(0x48);
+                //emu.debug.add_pc_breakpoint(0xC0CD);
+                //emu.debug.add_pc_breakpoint(0xC505);
                 //emu.debug.add_pc_breakpoint(0xC35C);
             },
             None => {

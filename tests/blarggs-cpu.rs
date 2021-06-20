@@ -34,17 +34,17 @@ mod blargg_cpu_test {
         assert_eq!(passed, true);
     }
 
-    #[test_case("01-special.gb")]
-    #[test_case("02-interrupts.gb"          ;  "Interrupts")]
-    #[test_case("03-op sp,hl.gb"            ;  "SP HL")]
-    #[test_case("04-op r,imm.gb"            ;  "Register Immediate")]
-    #[test_case("05-op rp.gb"               ;  "Register")]
-    #[test_case("06-ld r,r.gb"              ;  "Register to Register")]
-    //#[test_case("07-jr,jp,call,ret,rst.gb"  ;  "Jumps")]
-    #[test_case("08-misc instrs.gb"         ;  "Miscelaneouse")]
-    #[test_case("09-op r,r.gb"              ;  "Register add Register")]
-    #[test_case("10-bit ops.gb"             ;  "Bit Operations")]
-    #[test_case("11-op a,(hl).gb"           ;  "Special A Load")]
+    #[test_case("01-special.gb"             ;  "01-special.gb")]
+    #[test_case("02-interrupts.gb"          ;  "02-interrupts.gb")]
+    #[test_case("03-op sp,hl.gb"            ;  "03-op sp,hl.gb")]
+    #[test_case("04-op r,imm.gb"            ;  "04-op r,imm.gb")]
+    #[test_case("05-op rp.gb"               ;  "05-op rp.gb")]
+    #[test_case("06-ld r,r.gb"              ;  "06-ld r,r.gb")]
+    #[test_case("07-jr,jp,call,ret,rst.gb"  ;  "07-jr,jp,call,ret,rst.gb")]
+    #[test_case("08-misc instrs.gb"         ;  "08-misc instrs.gb")]
+    #[test_case("09-op r,r.gb"              ;  "09-op r,r.gb")]
+    #[test_case("10-bit ops.gb"             ;  "10-bit ops.gb")]
+    #[test_case("11-op a,(hl).gb"           ;  "11-op a,(hl).gb")]
     fn blargg_cpu_test(name: &str) {
         let mut rom = name.to_string();
         if let Ok(path) = env::var("TEST_ROM_PATH") {
