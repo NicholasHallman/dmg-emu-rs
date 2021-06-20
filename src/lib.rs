@@ -112,7 +112,6 @@ impl Emu {
             }
         } else {
             self.check_for_break();
-            //self.debug.trace_to_file(&self.mem, &self.cpu);
             if !self.debug.is_blocked {
                 if self.mem.transfering {
                     self.mem.dma_transfer();

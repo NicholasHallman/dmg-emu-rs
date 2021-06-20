@@ -340,20 +340,16 @@ impl DebugEmu {
             .unwrap();
 
         let pc = cpu.get_word_reg(&cpu::Reg::PC);
-        let line;
-        
-        match self.source_map.get(&pc) {
-            Some(l) => {
-                line = Some(l);
-            },
-            None => {
-                // we may need to re-map
-                self.load_assembly(mem, true);
-                line = self.source_map.get(&pc);
-            }
+        let first_op = mem.get(pc);
+        let op_size = op_byte_len(&first_op);
+        let ins;
+        if op_size == 1 {
+            ins = op_to_string(first_op, 0, 0);
+        } else if op_size == 2 {
+            ins = op_to_string(first_op, mem.get(pc + 1), 0);
+        } else {
+            ins = op_to_string(first_op, mem.get(pc + 1), mem.get( pc + 2));
         }
-        
-        let ins = self.source.get(line.unwrap().to_owned()).expect("???");
 
         let _e = match writeln!(file, "{:04X} | {}", pc, ins) {
             Err(_) => eprintln!("Error couldn't append to trace"),

@@ -1718,7 +1718,7 @@ impl Cpu {
                 mem.set(self.SP - 2, self.PC as u8);
             },
             4 => {
-                self.SP -= 1;
+                self.SP -= 2;
                 self.PC = 0x0000 | counter;
                 self.reset();
             },
