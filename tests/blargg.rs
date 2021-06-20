@@ -11,6 +11,7 @@ mod blargg_cpu_test {
     use dmg_emu::{Emu, cpu::{self, HalfReg, Reg}}; 
     use crate::cpu_assert::{EmuTester, EmuTestHelpers};
     use test_case::test_case;
+    use std::env;
 
     fn init(name: &str) -> Emu {
         let mut emu = Emu::new(false);
@@ -45,7 +46,12 @@ mod blargg_cpu_test {
     #[test_case("10-bit ops.gb"             ;  "Bit Operations")]
     #[test_case("11-op a,(hl).gb"           ;  "Special A Load")]
     fn blargg_test(name: &str) {
-        let mut emu = init(name);
+        let mut rom = name.to_string();
+        if let Ok(path) = env::var("TEST_ROM_PATH") {
+            rom = path + rom.as_str();
+        }
+
+        let mut emu = init(rom.as_str());
         run_rom(&mut emu);  
     }
 
