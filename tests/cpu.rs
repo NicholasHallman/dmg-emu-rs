@@ -99,4 +99,5 @@ mod cpu_tests {
             ..flag(cpu::Flag::C);..equals(true);
         };
     }
+
 }

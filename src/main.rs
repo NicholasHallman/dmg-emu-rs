@@ -1,3 +1,4 @@
+
 use dmg_emu;
 use pixels::{ Pixels };
 use winit::{dpi::PhysicalSize, event::{Event, VirtualKeyCode}, event_loop::ControlFlow, window::Window};
@@ -82,9 +83,9 @@ fn main() {
                 emu.load_rom(name);
                 emu.cpu.PC = 0x0100;
                 emu.cpu.SP = 0xFFFE;
-                emu.cpu.set_byte_reg(&dmg_emu::cpu::HalfReg::A, 1);
+                emu.cpu.AF = 0x1180;
 
-                emu.debug.add_pc_breakpoint(0x02A9);
+                //emu.debug.add_pc_breakpoint(0x0100);
                 //emu.debug.add_pc_breakpoint(0x48);
                 //emu.debug.add_pc_breakpoint(0xC35C);
             },

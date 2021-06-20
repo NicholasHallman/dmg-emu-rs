@@ -23,10 +23,10 @@ pub struct Mem {
     pub transfering: bool,
     transfer_count: u16,
     // IO
-    serial: Serial,
+    pub serial: Serial,
     joypad: Joypad,
 
-    pub ppu_access: bool
+    pub ppu_access: bool,
 
 }
 
