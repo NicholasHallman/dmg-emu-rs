@@ -56,4 +56,4 @@ jobs:
         with:
           command: test
         env: 
-          TEST_ROM_PATH: "gb-test-roms/cpu_instrs/individual/"
+          TEST_ROM_PATH: "cpu_instrs/individual/"
