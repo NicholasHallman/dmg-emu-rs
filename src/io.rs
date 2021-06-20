@@ -4,7 +4,10 @@ pub const SC_ADDR: u16 = 0xFF02;
 pub const P1_ADDR: u16 = 0xFF00;
 pub struct Serial {
     SB: u8,
-    SC: u8
+    SC: u8,
+    buffer: [char; 100],
+    buffer_pos: usize,
+    pub string_buffer: String
 }
 
 impl Serial {
@@ -12,7 +15,10 @@ impl Serial {
     pub fn new() -> Self {
         Self {
             SB: 0,
-            SC: 0
+            SC: 0,
+            buffer: [' '; 100],
+            buffer_pos: 0,
+            string_buffer: "".to_string()
         }
     }
 
@@ -24,7 +30,21 @@ impl Serial {
             SC_ADDR => {
                 self.SC = value;
                 if value == 0x81 {
-                    println!("Serial: {}", self.SB as char);
+                    if self.SB == 0x0A || self.buffer_pos == 99 { // newline
+                        let out: String = self.buffer.iter().collect();
+                        println!("Serial: {}", out);
+                        self.string_buffer += out.as_str();
+
+                        self.buffer_pos = 0;
+                        self.buffer = [' '; 100];
+                        if self.SB != 0x0A {
+                            self.buffer[self.buffer_pos] = self.SB as char;
+                            self.buffer_pos += 1;
+                        }
+                    } else {
+                        self.buffer[self.buffer_pos] = self.SB as char;
+                        self.buffer_pos += 1;
+                    }
                 }
             },
             _ => panic!("Serial does not exist at this address")

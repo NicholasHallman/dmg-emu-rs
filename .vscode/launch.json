@@ -38,7 +38,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["dr-mario.gb"],
+            "args": ["05-op rp.gb"],
             "cwd": "${workspaceFolder}"
         },
         {

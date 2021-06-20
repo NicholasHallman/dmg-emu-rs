@@ -28,8 +28,11 @@ impl Emu {
     pub fn new(debugging: bool) -> Self {
 
         let debug = DebugEmu::new();
-        debug.clear_term().expect("Failed to clear terminal");
-        debug.enable_trace();
+        if debugging {
+            debug.clear_term().expect("Failed to clear terminal");
+            debug.enable_trace();
+        }
+        
 
         Self {
             cpu: Cpu::new(),
@@ -81,7 +84,13 @@ impl Emu {
         self.debug.load_assembly(&self.mem, false);
     }
 
+    pub fn get_serial(&self) -> String {
+        self.mem.serial.string_buffer.clone()
+    }
+
     pub fn check_for_break(&mut self) {
+        if !self.debugging {return}
+
         if self.debug.is_blocked || (self.cpu.current_cycle == 1 && self.debug.is_breakpoint(self.cpu.PC))  {
             if !self.debug.is_blocked {
                 self.debug.print_registers(self).expect("Register Print Error");

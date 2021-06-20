@@ -9,6 +9,19 @@ pub enum Reg {
     PC
 }
 
+impl From<&Reg> for String {
+    fn from(r: &Reg) -> Self {
+        match r {
+            Reg::AF => "AF".to_string(),
+            Reg::BC => "BC".to_string(),
+            Reg::DE => "DE".to_string(),
+            Reg::HL => "HL".to_string(),
+            Reg::SP => "SP".to_string(),
+            Reg::PC => "PC".to_string(),
+        }
+    }
+}
+
 pub enum HalfReg {
     A,
     F,
@@ -83,7 +96,7 @@ impl Cpu {
 
     pub fn check_interupts(&mut self, mem: &mut Mem) {
         // check for interupts
-        if (!self.ime) {return}
+        if !self.ime {return}
 
         let enabled = mem.get(0xFFFF); // is the interupt enabled
         let flags = mem.get(0xFF0F); // was the interupt triggered
@@ -858,7 +871,12 @@ impl Cpu {
         match self.current_cycle {
             2 => {
                 let value = self.get_word_reg(reg);
-                let (result, _) = value.overflowing_add(1);
+                let result = value.wrapping_add(1);
+                match reg {
+                    &Reg::SP => println!("INC SP: BEFORE {} AFTER {}", value, result),
+                    _ => ()
+                };
+
                 self.set_word_reg(reg, result);
                 self.reset()
             },
@@ -2041,10 +2059,10 @@ impl Cpu {
 
     fn rlc(&mut self, reg: &HalfReg) {
         let value = self.get_byte_reg(reg);
-        let b7 = value & 0xF0;
+        let b7 = value >> 7 & 1 == 1;
         let value = value.rotate_left(1);
 
-        self.set_flag(Flag::C, b7 == 0xF0);
+        self.set_flag(Flag::C, b7);
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::N, false);
@@ -2060,10 +2078,10 @@ impl Cpu {
             },
             4 => {
                 let value = self.store[1];
-                let b7 = value & 0xF0;
+                let b7 = value >> 7 & 1 == 1;
                 let value = value.rotate_left(1);
 
-                self.set_flag(Flag::C, b7 == 0xF0);
+                self.set_flag(Flag::C, b7);
                 self.set_flag(Flag::Z, value == 0);
                 self.set_flag(Flag::H, false);
                 self.set_flag(Flag::N, false);
@@ -2077,10 +2095,10 @@ impl Cpu {
 
     fn rrc(&mut self, reg: &HalfReg) {
         let value = self.get_byte_reg(reg);
-        let b0 = value & 0x1;
+        let b0 = value & 1 == 1;
         let value = value.rotate_right(1);
 
-        self.set_flag(Flag::C, b0 == 0x1);
+        self.set_flag(Flag::C, b0);
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::N, false);
@@ -2096,10 +2114,10 @@ impl Cpu {
             },
             4 => {
                 let value = self.store[1];
-                let b0 = value & 0x1;
+                let b0 = value & 1 == 1;
                 let value = value.rotate_right(1);
 
-                self.set_flag(Flag::C, b0 == 0x1);
+                self.set_flag(Flag::C, b0);
                 self.set_flag(Flag::Z, value == 0);
                 self.set_flag(Flag::H, false);
                 self.set_flag(Flag::N, false);
@@ -2113,11 +2131,11 @@ impl Cpu {
 
     fn rl(&mut self, reg: &HalfReg) {
         let value = self.get_byte_reg(reg);
-        let b7 = (value >> 7) & 1;
+        let b7 = (value >> 7) & 1 == 1;
         let c = if self.get_flag(Flag::C) {1} else {0};
         let value = (value << 1) | c;
 
-        self.set_flag(Flag::C, b7 == 1);
+        self.set_flag(Flag::C, b7);
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::N, false);
@@ -2133,11 +2151,11 @@ impl Cpu {
             },
             4 => {
                 let value = self.store[1];
-                let b7 = value & 0xF0;
+                let b7 = value >> 7 & 1 == 1;
                 let c = if self.get_flag(Flag::C) {1} else {0};
                 let value = (value << 1) | c;
         
-                self.set_flag(Flag::C, b7 == 0xF0);
+                self.set_flag(Flag::C, b7);
                 self.set_flag(Flag::Z, value == 0);
                 self.set_flag(Flag::H, false);
                 self.set_flag(Flag::N, false);
@@ -2151,11 +2169,11 @@ impl Cpu {
 
     fn rr(&mut self, reg: &HalfReg) {
         let value = self.get_byte_reg(reg);
-        let b0 = value & 0x1;
-        let c = if self.get_flag(Flag::C) {0xF0} else {0};
+        let b0 = value & 1 == 1;
+        let c = if self.get_flag(Flag::C) {0x80} else {0};
         let value = (value >> 1) | c;
 
-        self.set_flag(Flag::C, b0 == 0x1);
+        self.set_flag(Flag::C, b0);
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::N, false);
@@ -2171,11 +2189,11 @@ impl Cpu {
             },
             4 => {
                 let value = self.store[1];
-                let b0 = value & 0x1;
-                let c = if self.get_flag(Flag::C) {0xF0} else {0};
+                let b0 = value & 1 == 1;
+                let c = if self.get_flag(Flag::C) {0x80} else {0};
                 let value = (value >> 1) | c;
         
-                self.set_flag(Flag::C, b0 == 0x1);
+                self.set_flag(Flag::C, b0);
                 self.set_flag(Flag::Z, value == 0);
                 self.set_flag(Flag::H, false);
                 self.set_flag(Flag::N, false);
@@ -2189,10 +2207,10 @@ impl Cpu {
 
     fn sla(&mut self, reg: &HalfReg) {
         let value = self.get_byte_reg(reg);
-        let b7 = value & 0xF0;
+        let b7 = value >> 7 & 1 == 1;
         let value = value << 1;
 
-        self.set_flag(Flag::C, b7 == 0xF0);
+        self.set_flag(Flag::C, b7);
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::N, false);
@@ -2208,10 +2226,10 @@ impl Cpu {
             },
             4 => {
                 let value = self.store[1];
-                let b7 = value & 0xF0;
+                let b7 = value >> 7 & 1 == 1;
                 let value = value << 1;
         
-                self.set_flag(Flag::C, b7 == 0xF0);
+                self.set_flag(Flag::C, b7);
                 self.set_flag(Flag::Z, value == 0);
                 self.set_flag(Flag::H, false);
                 self.set_flag(Flag::N, false);
@@ -2225,11 +2243,11 @@ impl Cpu {
 
     fn sra(&mut self, reg: &HalfReg) {
         let value = self.get_byte_reg(reg);
-        let b0 = value & 0x1;
-        let b7 = value & 0xF0;
+        let b0 = value & 0x1 == 1;
+        let b7 = value & 0x80;
         let value = (value >> 1) | b7;
 
-        self.set_flag(Flag::C, b0 == 0x1);
+        self.set_flag(Flag::C, b0);
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::N, false);
@@ -2245,11 +2263,11 @@ impl Cpu {
             },
             4 => {
                 let value = self.store[1];
-                let b0 = value & 0x1;
-                let b7 = value & 0xF0;
+                let b0 = value & 1 == 1;
+                let b7 = value & 0x80;
                 let value = (value >> 1) | b7;
         
-                self.set_flag(Flag::C, b0 == 0x1);
+                self.set_flag(Flag::C, b0);
                 self.set_flag(Flag::Z, value == 0);
                 self.set_flag(Flag::H, false);
                 self.set_flag(Flag::N, false);
@@ -2355,7 +2373,7 @@ impl Cpu {
             },
             4 => {
                 let value = self.store[1];
-                let bit = if (value >> bit_num) & 1 == 1 {true} else {false};
+                let bit = (value >> bit_num) & 1 == 1;
 
                 self.set_flag(Flag::Z, !bit);
                 self.set_flag(Flag::N, false);
@@ -2369,7 +2387,7 @@ impl Cpu {
 
     fn res(&mut self, reg: &HalfReg, bit_mask: u8) {
         let mut value = self.get_byte_reg(reg);
-        value ^= bit_mask;
+        value &= !bit_mask;
 
         self.set_byte_reg(reg, value);
         self.reset();
@@ -2382,7 +2400,7 @@ impl Cpu {
             },
             4 => {
                 let mut value = self.store[1];
-                value ^= bit_mask;
+                value &= !bit_mask;
         
                 mem.set(self.HL, value);
                 self.reset();
