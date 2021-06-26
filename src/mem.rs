@@ -1,5 +1,5 @@
 
-use crate::io::{Button, Joypad, P1_ADDR, SB_ADDR, SC_ADDR, Serial};
+use crate::io::{Button, Joypad, P1_ADDR, SB_ADDR, SC_ADDR, Serial, Timer, DIV_ADDR, TIMA_ADDR, TMA_ADDR, TAC_ADDR};
 
 pub struct Mem {
     pub mem: [u8; 0xFFFF],
@@ -25,6 +25,7 @@ pub struct Mem {
     // IO
     pub serial: Serial,
     joypad: Joypad,
+    timer: Timer,
 
     pub ppu_access: bool,
 
@@ -55,6 +56,7 @@ impl Mem {
 
             serial: Serial::new(),
             joypad: Joypad::new(),
+            timer: Timer::new(),
 
             ppu_access: false
         }
@@ -84,7 +86,8 @@ impl Mem {
             0xFF49 => self.obp1,
             0xFF4A => self.wy,
             0xFF4B => self.wx,
-
+            
+            DIV_ADDR | TIMA_ADDR | TMA_ADDR | TAC_ADDR => self.timer.read(addr),
             SB_ADDR | SC_ADDR => self.serial.read(addr),
             0xE000 ..= 0xFDFF => self.mem[(addr - 0x200) as usize],
             0x0000 ..= 0xFFFE => self.mem[addr as usize],
@@ -131,7 +134,8 @@ impl Mem {
             0xFF49 => self.obp1 = value,
             0xFF4A => self.wy = value,
             0xFF4B => self.wx = value,
-            
+
+            DIV_ADDR | TIMA_ADDR | TMA_ADDR | TAC_ADDR => self.timer.write(addr, value),
             SB_ADDR | SC_ADDR => self.serial.write(addr, value),
             0xFFFF => self.ienable = value,
             _ => self.mem[addr as usize] = value,
@@ -150,10 +154,10 @@ impl Mem {
 
         let from_addr = (self.dma as u16) << 8;
         let cur_from = from_addr + self.transfer_count;
-
+        let value = self.get(cur_from);
         self.set(
             cur_addr,
-            self.get(cur_from)
+            value
         );
         self.transfer_count += 1;
         self.transfering = true;
@@ -171,5 +175,12 @@ impl Mem {
 
     pub fn button(&mut self, b: Button, v: bool) {
         self.joypad.set(b, v);
+    }
+
+    pub fn tick(&mut self) {
+        let overflowed = self.timer.tick();
+        if overflowed {
+            self.mem[0xFF0F as usize] = self.mem[0xFF0F as usize] & 4;
+        }
     }
 }

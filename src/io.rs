@@ -60,17 +60,21 @@ impl Serial {
     }
 }
 
-const DIV_ADDR: u16 = 0xFF04;
-const TIMA_ADDR: u16 = 0xFF05;
-const TMA_ADDR: u16 = 0xFF06;
-const TAC_ADDR: u16 = 0xFF07;
+pub const DIV_ADDR: u16 = 0xFF04;
+pub const TIMA_ADDR: u16 = 0xFF05;
+pub const TMA_ADDR: u16 = 0xFF06;
+pub const TAC_ADDR: u16 = 0xFF07;
 
-struct Timer {
+pub struct Timer {
     DIV: u8,
     TIMA: u8,
     TMA: u8,
-    TAC: u8
+    TAC: u8,
+    div_clock: u32,
+    tim_clock: u32,
+    overflowed: bool
 }
+
 
 impl Timer {
     pub fn new() -> Self {
@@ -79,26 +83,77 @@ impl Timer {
             TIMA: 0,
             TMA: 0,
             TAC: 0,
+            div_clock: 0,
+            tim_clock: 0,
+            overflowed: false
         }
     }
 
     pub fn write(&mut self, addr: u16, value: u8) {
         match addr {
-            DIV_ADDR => self.DIV = value,
+            DIV_ADDR => self.DIV = 0,
             TIMA_ADDR => self.TIMA = value,
             TMA_ADDR => self.TMA = value,
-            TAC_ADDR => self.TAC = value,
+            TAC_ADDR => {
+                self.TAC = value;
+                self.tim_clock = 0;
+            },
             _ => panic!("Timer does not exist at this address")
         }
     }
 
-    pub fn read(&mut self, addr: u16) -> u8 {
+    pub fn read(&self, addr: u16) -> u8 {
         match addr {
             DIV_ADDR => self.DIV,
             TIMA_ADDR => self.TIMA,
             TMA_ADDR => self.TMA,
             TAC_ADDR => self.TAC,
             _ => panic!("Timer does not exist at this address")
+        }
+    }
+
+    fn tick_div(&mut self) {
+        self.div_clock += 1;
+        if self.div_clock == 255 {
+            self.div_clock = 0;
+            self.DIV = self.DIV.overflowing_add(1).0;
+        }
+    }
+
+    fn tick_tima(&mut self) {
+        let interval = self.control();
+        self.tim_clock += 1;
+        if self.tim_clock == interval {
+            self.tim_clock = 0;
+            let (result, overflow) = self.TIMA.overflowing_add(1);
+            if overflow {
+                // interupt 
+                self.overflowed = true;
+                self.TIMA = self.TMA;
+            } else {
+                self.TIMA = result;
+            }
+        }
+    }
+
+    pub fn tick(&mut self) -> bool {
+        self.overflowed = false;
+        self.tick_div();
+        if self.timer_enabled() { self.tick_tima() }
+        self.overflowed
+    }
+
+    fn timer_enabled(&self) -> bool {
+        self.TAC >> 2 & 1 == 1
+    }
+
+    fn control(&self) -> u32 {
+        match self.TAC & 3 {
+            0 => 1024,
+            1 => 262144,
+            2 => 65536,
+            3 => 16384,
+            _ => panic!("How did this value become > 3???")
         }
     }
 }

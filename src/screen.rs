@@ -4,14 +4,14 @@ use winit::{dpi::LogicalSize, event_loop::EventLoop, window::{Window, WindowBuil
 pub const WIDTH: u32 = 160;
 pub const HEIGHT: u32 = 144;
 
-pub fn init() -> Result<(EventLoop<()>, Pixels<Window>, Window), Error> {
+pub fn init(rom_name: String) -> Result<(EventLoop<()>, Pixels<Window>, Window), Error> {
 
     let event_loop = EventLoop::new();
     
     let window = {
         let size = LogicalSize::new((WIDTH * 3) as f64, (HEIGHT * 3) as f64);
         WindowBuilder::new()
-            .with_title("DMG EMU")
+            .with_title(format!("DMG EMU {}", rom_name))
             .with_inner_size(size)
             .with_min_inner_size(size)
             .build(&event_loop)

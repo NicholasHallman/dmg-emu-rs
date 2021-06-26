@@ -18,8 +18,19 @@ enum WindowStatus {
 
 fn main() {
 
+    let mut rom_name: Option<String> = None;
+        // get the rom name
+    for (i, argument) in env::args().enumerate() {
+        println!("argument: {}\n", argument);
+        if i == 1 {
+            rom_name = Some(argument);
+        } else {
+            rom_name = Some("".to_string());
+        }
+    }
+
     // initialize window
-    let (event_loop, pixels, window) = dmg_emu::screen::init().unwrap();
+    let (event_loop, pixels, window) = dmg_emu::screen::init(rom_name.unwrap()).unwrap();
     let mut input = WinitInputHelper::new();
 
     // initialize thread communications

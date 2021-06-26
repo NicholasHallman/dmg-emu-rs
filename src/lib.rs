@@ -14,6 +14,7 @@ use mem::{Mem};
 use ppu::{Ppu};
 use debug::{DebugEmu};
 
+
 pub struct Emu {
     pub cpu: Cpu,
     pub mem: Mem,
@@ -21,7 +22,7 @@ pub struct Emu {
 
     pub debugging: bool,
     pub debug: DebugEmu,
-
+    
 }
 
 impl Emu {
@@ -118,6 +119,7 @@ impl Emu {
                 }
                 self.cpu.tick(&mut self.mem);
                 self.ppu.tick(&mut self.mem);
+                self.mem.tick();
             }
         }
     }
