@@ -119,6 +119,7 @@ impl Emu {
                 }
                 self.cpu.tick(&mut self.mem);
                 self.ppu.tick(&mut self.mem);
+                self.ppu.tick(&mut self.mem);
                 self.mem.tick();
             }
         }
@@ -126,5 +127,25 @@ impl Emu {
 
     pub fn press_button<B>(&mut self, button: B, value: bool) where B: Into<Button> {
         self.mem.button(button.into(), value);
+    }
+
+    pub fn button_states(&mut self, buttons: u8) {
+        let up = buttons & 1 == 1;
+        let down = buttons >> 1 & 1 == 1; 
+        let left = buttons >> 2 & 1 == 1; 
+        let right = buttons >> 3 & 1 == 1; 
+        let a = buttons >> 4 & 1 == 1; 
+        let b = buttons >> 5 & 1 == 1; 
+        let start = buttons >> 6 & 1 == 1; 
+        let select = buttons >> 7 & 1 == 1;
+        
+        self.mem.button(Button::A, !a);
+        self.mem.button(Button::B, !b);
+        self.mem.button(Button::Start, !start);
+        self.mem.button(Button::Select, !select);
+        self.mem.button(Button::Up, !up);
+        self.mem.button(Button::Down, !down);
+        self.mem.button(Button::Left, !left);
+        self.mem.button(Button::Right, !right);
     }
 }

@@ -70,7 +70,7 @@ impl Mem {
             }
         }
         match addr {
-            P1_ADDR => 0xFF,
+            P1_ADDR => self.joypad.read(),
             0xFFFF => self.ienable,
             0xFF0F => self.iflag,
 

@@ -319,6 +319,10 @@ impl DebugEmu {
         Ok(())
     }
 
+    pub fn print_timer() {
+        
+    }
+
     pub fn enable_trace(&self) {
         if let Ok(file) = OpenOptions::new()
         .write(true)

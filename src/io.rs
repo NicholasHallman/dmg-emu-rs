@@ -75,6 +75,8 @@ pub struct Timer {
     overflowed: bool
 }
 
+const FREQUENCY: u32 = 4_194_304;
+const CYCLE: u32 = 4;
 
 impl Timer {
     pub fn new() -> Self {
@@ -113,7 +115,7 @@ impl Timer {
     }
 
     fn tick_div(&mut self) {
-        self.div_clock += 1;
+        self.div_clock += CYCLE;
         if self.div_clock == 255 {
             self.div_clock = 0;
             self.DIV = self.DIV.overflowing_add(1).0;
@@ -122,7 +124,7 @@ impl Timer {
 
     fn tick_tima(&mut self) {
         let interval = self.control();
-        self.tim_clock += 1;
+        self.tim_clock += CYCLE;
         if self.tim_clock == interval {
             self.tim_clock = 0;
             let (result, overflow) = self.TIMA.overflowing_add(1);
@@ -139,7 +141,9 @@ impl Timer {
     pub fn tick(&mut self) -> bool {
         self.overflowed = false;
         self.tick_div();
-        if self.timer_enabled() { self.tick_tima() }
+        if self.timer_enabled() { 
+            self.tick_tima() 
+        }
         self.overflowed
     }
 
@@ -149,11 +153,11 @@ impl Timer {
 
     fn control(&self) -> u32 {
         match self.TAC & 3 {
-            0 => 1024,
-            1 => 262144,
-            2 => 65536,
-            3 => 16384,
-            _ => panic!("How did this value become > 3???")
+            0 => 4096 / 4,
+            1 => 262144 / 4,
+            2 => 65536 / 4,
+            3 => 16384 / 4,
+            _ => unreachable!()
         }
     }
 }
@@ -231,13 +235,13 @@ impl Joypad {
     }
     pub fn read(&self) -> u8 {
         if !self.arrow_select {
-            return ((!self.down) as u8) << 3 | ((!self.up) as u8) << 2 | ((!self.left) as u8) << 1 | (!self.right) as u8;
+            return 0xC0 | ((!self.down) as u8) << 3 | ((!self.up) as u8) << 2 | ((!self.left) as u8) << 1 | (!self.right) as u8;
         } else {
-            return ((!self.start) as u8) << 3 | ((!self.select) as u8) << 2 | ((!self.b) as u8) << 1 | ((!self.a) as u8);
+            return 0xC0 | ((!self.start) as u8) << 3 | ((!self.select) as u8) << 2 | ((!self.b) as u8) << 1 | ((!self.a) as u8);
         }
     }
 
-    pub fn write(&mut self, mut value: u8) {
+    pub fn write(&mut self, value: u8) {
         self.action_select = (value >> 5) & 1 != 1;
         self.arrow_select = (value >> 4) & 1 != 1;
     }
