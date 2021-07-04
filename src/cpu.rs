@@ -72,7 +72,7 @@ impl Cpu {
             store: [0; 5],
             is_halt: false,
             is_stop: false,
-            ime: true
+            ime: false
         }
     }
 
@@ -256,8 +256,8 @@ impl Cpu {
         return false;
     }
 
-    pub fn set_whca(&mut self, a: u16, b: u16) -> bool {
-        if ((a & 0xFF) + (b & 0xFF)) & 0x100 == 0x100 {
+    pub fn set_4hca(&mut self, a: u16, b: u16) -> bool {
+        if ((a & 0xF) + (b & 0xF)) & 0x10 == 0x10 {
             self.set_flag(Flag::H, true);
             return true;
         }
@@ -265,8 +265,26 @@ impl Cpu {
         return false;
     }
 
-    pub fn set_whcs(&mut self, a: u16, b: u16) -> bool {
-        if (a & 0xFF).overflowing_sub(b & 0xFF).0 & 0x100 == 0x100 {
+    pub fn set_4hcs(&mut self, a: u16, b: u16) -> bool {
+        if (a & 0xF).overflowing_sub(b & 0xF).0 & 0x10 == 0x10 {
+            self.set_flag(Flag::H, true);
+            return true;
+        }
+        self.set_flag(Flag::H, false);
+        return false;
+    }
+
+    pub fn set_12hca(&mut self, a: u16, b: u16) -> bool {
+        if ((a & 0x0FFF) + (b & 0x0FFF)) & 0x1000 == 0x1000 {
+            self.set_flag(Flag::H, true);
+            return true;
+        }
+        self.set_flag(Flag::H, false);
+        return false;
+    }
+
+    pub fn set_12hcs(&mut self, a: u16, b: u16) -> bool {
+        if (a & 0x0FFF).overflowing_sub(b & 0x0FFF).0 & 0x1000 == 0x1000 {
             self.set_flag(Flag::H, true);
             return true;
         }
@@ -321,7 +339,7 @@ impl Cpu {
             0x28 => self.jr_con(mem, Flag::Z, true),
             0x29 => self.add_rr_rr(&Reg::HL, &Reg::HL),
             0x2A => self.ld_a_hl_inc(mem),
-            0x2B => self.dec_rr(&Reg::DE),
+            0x2B => self.dec_rr(&Reg::HL),
             0x2C => self.inc_r(&HalfReg::L),
             0x2D => self.dec_r(&HalfReg::L),
             0x2E => self.ld_r_d8(mem, &HalfReg::L),
@@ -836,19 +854,15 @@ impl Cpu {
                 self.store[0] = self.get_op(mem);
             },
             3 => {
-                let s8 = self.store[0] as i8; 
-                let result: (u16, bool);
-                if s8 < 0 {
-                    result = self.SP.overflowing_sub(s8.abs() as u16);
-                    self.set_whcs(self.SP, s8.abs() as u16);
-                } else {
-                    result = self.SP.overflowing_add(s8.abs() as u16);
-                    self.set_whca(self.SP, s8 as u16);
-                }
+                let sp = self.SP;
+                let s8 = i16::from(self.store[0] as i8) as u16; 
+                let result: (u16, bool) = sp.overflowing_add(s8);
+
                 self.HL = result.0;
                 self.set_flag(Flag::N, false);
                 self.set_flag(Flag::Z, false);
-                self.set_flag(Flag::C, result.1);
+                self.set_flag(Flag::C, (sp & 0xFF) + (s8 & 0xFF) > 0xFF);
+                self.set_flag(Flag::H, (sp & 0xF) + (s8 & 0xF) > 0xF);
                 self.reset();
             },
             _ => ()
@@ -1143,7 +1157,7 @@ impl Cpu {
 
                 self.set_flag(Flag::N, false);
                 self.set_flag(Flag::C, overflow);
-                self.set_whca(value_to, value_from);
+                self.set_12hca(value_to, value_from);
                 self.set_word_reg(&to, result);
                 self.reset();
             },
@@ -1231,19 +1245,15 @@ impl Cpu {
                 // do some 4 bit operation???
             },
             4 => {
-                let s8 = self.store[0] as i8;
-                let result: (u16, bool);
-                if s8 < 0 {
-                    result = self.SP.overflowing_sub(s8.abs() as u16);
-                    self.set_whcs(self.SP, s8.abs() as u16);
-                } else {
-                    result = self.SP.overflowing_add(s8.abs() as u16);
-                    self.set_whca(self.SP, s8.abs() as u16);
-                }
-                self.set_flag(Flag::Z, false);
-                self.set_flag(Flag::N, false);
-                self.set_flag(Flag::C, result.1);
+                let sp = self.SP;
+                let s8 = i16::from(self.store[0] as i8) as u16; 
+                let result: (u16, bool) = sp.overflowing_add(s8);
+
                 self.SP = result.0;
+                self.set_flag(Flag::N, false);
+                self.set_flag(Flag::Z, false);
+                self.set_flag(Flag::C, (sp & 0xFF) + (s8 & 0xFF) > 0xFF);
+                self.set_flag(Flag::H, (sp & 0xF) + (s8 & 0xF) > 0xF);
                 self.reset();
             }
             _ => ()

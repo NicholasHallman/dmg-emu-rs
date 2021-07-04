@@ -140,9 +140,9 @@ impl Timer {
 
     pub fn tick(&mut self) -> bool {
         self.overflowed = false;
-        self.tick_div();
+        //self.tick_div();
         if self.timer_enabled() { 
-            self.tick_tima() 
+            //self.tick_tima() 
         }
         self.overflowed
     }

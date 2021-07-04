@@ -119,7 +119,6 @@ impl Emu {
                 }
                 self.cpu.tick(&mut self.mem);
                 self.ppu.tick(&mut self.mem);
-                self.ppu.tick(&mut self.mem);
                 self.mem.tick();
             }
         }

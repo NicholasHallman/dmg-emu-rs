@@ -9,7 +9,7 @@ pub fn init(rom_name: String) -> Result<(EventLoop<()>, Pixels<Window>, Window),
     let event_loop = EventLoop::new();
     
     let window = {
-        let size = LogicalSize::new((WIDTH * 3) as f64, (HEIGHT * 3) as f64);
+        let size = LogicalSize::new((WIDTH * 2) as f64, (HEIGHT * 2) as f64);
         WindowBuilder::new()
             .with_title(format!("DMG EMU {}", rom_name))
             .with_inner_size(size)

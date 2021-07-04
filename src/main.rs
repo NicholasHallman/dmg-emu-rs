@@ -141,10 +141,10 @@ fn main() {
             },
             None => {
                 emu.load_boot_rom();
-                //emu.debug.add_pc_breakpoint(0x0000);
+                emu.debug.add_pc_breakpoint(0x0000);
                 // emu.debug.add_breakpoint(6);
                 // emu.debug.add_breakpoint(28);
-                // emu.debug.add_breakpoint(0x3F);
+                emu.debug.add_breakpoint(0x40);
                 // emu.debug.add_breakpoint(0x45);
                 // emu.debug.add_breakpoint(0x47);
             } 
