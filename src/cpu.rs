@@ -1,4 +1,5 @@
 use crate::mem::Mem;
+use wasm_bindgen::prelude::*;
 
 pub enum Reg {
     AF,
@@ -40,6 +41,7 @@ pub enum Flag {
     C
 }
 
+#[wasm_bindgen]
 pub struct Cpu {
     // registers
     pub AF: u16, 

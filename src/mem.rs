@@ -1,8 +1,11 @@
 
 use crate::io::{Button, Joypad, P1_ADDR, SB_ADDR, SC_ADDR, Serial, Timer, DIV_ADDR, TIMA_ADDR, TMA_ADDR, TAC_ADDR};
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
 
 pub struct Mem {
-    pub mem: [u8; 0xFFFF],
+    mem: Vec<u8>,
     // INTERUPT
     iflag: u8,
     ienable: u8,
@@ -23,7 +26,7 @@ pub struct Mem {
     pub transfering: bool,
     transfer_count: u16,
     // IO
-    pub serial: Serial,
+    serial: Serial,
     joypad: Joypad,
     timer: Timer,
 
@@ -34,7 +37,7 @@ pub struct Mem {
 impl Mem {
     pub fn new() -> Self {
         Self {
-            mem: [0; 0xFFFF],
+            mem: vec![0; 0xFFFF],
             iflag: 0,
             ienable: 0x1F,
 
@@ -60,6 +63,18 @@ impl Mem {
 
             ppu_access: false
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.mem = vec![0; 0xFFFF];
+    }
+
+    pub fn get_mem(&mut self) -> &mut Vec<u8> {
+        &mut self.mem
+    }
+
+    pub fn get_serial(&self) -> &Serial {
+        &self.serial
     }
 
     pub fn get(&self, addr: u16) -> u8 {

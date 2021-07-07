@@ -20,13 +20,13 @@ pub trait EmuTestHelpers {
 impl EmuTestHelpers for Emu {
     fn tick_cpu(&mut self, times: u16) {
         for _ in 0..times {
-            self.cpu.tick(&mut self.mem);
+            self.tick();
         }
     }
     fn tick_till_done(&mut self) {
-        self.cpu.tick(&mut self.mem);
-        while self.cpu.current_cycle != 1 {
-            self.cpu.tick(&mut self.mem);
+        self.tick();
+        while self.cpu().current_cycle != 1 {
+            self.tick();
         }
     }
 }
@@ -114,13 +114,13 @@ impl Assert {
     }
 
     pub fn mem(&mut self, addr: u16) {
-        let value = self.emu.mem.get(addr);
+        let value = self.emu.mem().get(addr);
         self.last_value = CompValue::U8(value);
         self.last_compared = LastCompared::Mem;
     }
 
     pub fn flag(&mut self, f: Flag) {
-        let value = self.emu.cpu.get_flag(f);
+        let value = self.emu.cpu().get_flag(f);
         self.last_value = CompValue::Bool(value);
         self.last_compared = LastCompared::Flag;
     }
@@ -128,9 +128,9 @@ impl Assert {
     pub fn reg<R>(&mut self, r: R) where R: Into<Register>{
         match r.into() {
             Register::Half(h) => 
-                self.last_value = CompValue::U8(self.emu.cpu.get_byte_reg(&h)),
+                self.last_value = CompValue::U8(self.emu.cpu().get_byte_reg(&h)),
             Register::Full(f) => 
-                self.last_value = CompValue::U16(self.emu.cpu.get_word_reg(&f)),
+                self.last_value = CompValue::U16(self.emu.cpu().get_word_reg(&f)),
         };
         self.last_compared = LastCompared::Reg;
     }
