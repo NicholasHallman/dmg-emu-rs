@@ -7,7 +7,7 @@ pub mod io;
 use std::{fs};
 use wasm_bindgen::prelude::*;
 
-use cpu::{Cpu};
+use cpu::{Cpu, DebugCpu};
 use io::Button;
 use mem::{Mem};
 use ppu::{Ppu};
@@ -35,10 +35,17 @@ impl Emu {
         self.cpu.AF = 0x1180;
     }
 
+    pub fn tick(&mut self) {
+        self.cycle();
+        while self.cpu.get_cycle() != 1 {
+            self.cycle();
+        }
+    }
+
     pub fn tick_till_frame_done(&mut self) -> u16 {
-        self.tick();
+        self.cycle();
         while !self.ppu.ready {
-            self.tick();
+            self.cycle();
         }
         self.cpu.PC
     }
@@ -53,6 +60,18 @@ impl Emu {
             self.mem.set(i, inst);
             i += 1;
         }
+    }
+
+    pub fn get_cpu_state(&self) -> DebugCpu {
+        self.cpu.get_state()
+    }
+
+    pub fn get_mem_state(&self) -> Vec<u8> {
+        let mut clone: Vec<u8> = vec![0; 0xFFFF];
+        for i in 0..0xFFFF{
+            clone[i as usize] = self.mem.get(i);
+        }
+        clone
     }
 
     pub fn button_states(&mut self, buttons: u8) {
@@ -132,7 +151,7 @@ impl Emu {
         self.mem.get_serial().get_buffer().clone()
     }
 
-    pub fn tick(&mut self) {
+    pub fn cycle(&mut self) {
         if self.mem.transfering {
             self.mem.dma_transfer();
         }
@@ -140,7 +159,6 @@ impl Emu {
         self.ppu.tick(&mut self.mem);
         self.mem.tick();
     }
-
    
     pub fn press_button<B>(&mut self, button: B, value: bool) where B: Into<Button> {
         self.mem.button(button.into(), value);
