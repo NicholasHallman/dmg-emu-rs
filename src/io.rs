@@ -2,12 +2,15 @@
 pub const SB_ADDR: u16 = 0xFF01; 
 pub const SC_ADDR: u16 = 0xFF02; 
 pub const P1_ADDR: u16 = 0xFF00;
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
 pub struct Serial {
     SB: u8,
     SC: u8,
     buffer: [char; 100],
     buffer_pos: usize,
-    pub string_buffer: String
+    string_buffer: String
 }
 
 impl Serial {
@@ -58,6 +61,10 @@ impl Serial {
             _ => panic!("Serial does not exist at this address")
         }
     }
+
+    pub fn get_buffer(&self) -> &String {
+        &self.string_buffer
+    }
 }
 
 pub const DIV_ADDR: u16 = 0xFF04;
@@ -65,6 +72,7 @@ pub const TIMA_ADDR: u16 = 0xFF05;
 pub const TMA_ADDR: u16 = 0xFF06;
 pub const TAC_ADDR: u16 = 0xFF07;
 
+#[wasm_bindgen]
 pub struct Timer {
     DIV: u8,
     TIMA: u8,
@@ -205,6 +213,7 @@ impl From<String> for Button {
     }
 }
 
+#[wasm_bindgen]
 pub struct Joypad {
     a: bool,
     b: bool,

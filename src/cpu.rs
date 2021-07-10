@@ -1,4 +1,5 @@
 use crate::mem::Mem;
+use wasm_bindgen::prelude::*;
 
 pub enum Reg {
     AF,
@@ -40,6 +41,7 @@ pub enum Flag {
     C
 }
 
+#[wasm_bindgen]
 pub struct Cpu {
     // registers
     pub AF: u16, 
@@ -56,6 +58,19 @@ pub struct Cpu {
 
     pub is_halt: bool,
     pub is_stop: bool,
+}
+
+#[wasm_bindgen]
+pub struct DebugCpu {
+    pub AF: u16, 
+    pub BC: u16, 
+    pub DE: u16, 
+    pub HL: u16, 
+    pub SP: u16, 
+    pub PC: u16,
+    pub ime: bool,
+    pub halt: bool,
+    pub stop: bool
 }
 
 impl Cpu {
@@ -76,6 +91,20 @@ impl Cpu {
         }
     }
 
+    pub fn get_state(&self) -> DebugCpu {
+        DebugCpu {
+            AF: self.AF,
+            BC: self.BC,
+            DE: self.DE,
+            HL: self.HL,
+            SP: self.SP,
+            PC: self.PC,
+            ime: self.ime,
+            halt: self.is_halt,
+            stop: self.is_stop
+        }
+    }
+
     pub fn get_op(&mut self, mem: &Mem) -> u8 {
         let pc = self.PC;
         self.PC += 1;
@@ -84,6 +113,10 @@ impl Cpu {
 
     pub fn reset(&mut self) {
         self.current_cycle = 0;
+    }
+
+    pub fn get_cycle(&self) -> i32 {
+        self.current_cycle.clone()
     }
 
     pub fn interupt(&mut self, mem: &mut Mem, isr: u16) {

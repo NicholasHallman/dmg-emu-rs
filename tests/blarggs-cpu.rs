@@ -1,24 +1,20 @@
 #[cfg(test)]
 
-#[macro_use]
-extern crate cascade;
-
 extern crate test_case;
 mod cpu_assert;
 
 mod blargg_cpu_test {
 
-    use dmg_emu::{Emu, cpu::{self, HalfReg, Reg}}; 
-    use crate::cpu_assert::{EmuTester, EmuTestHelpers};
+    use dmg_emu::{Emu}; 
     use test_case::test_case;
     use std::env;
 
     fn init(name: &str) -> Emu {
-        let mut emu = Emu::new(false);
+        let mut emu = Emu::new();
         emu.load_rom(name);
-        emu.cpu.PC = 0x0100;
-        emu.cpu.SP = 0xFFFE;
-        emu.cpu.AF = 0x1180;
+        emu.cpu().PC = 0x0100;
+        emu.cpu().SP = 0xFFFE;
+        emu.cpu().AF = 0x1180;
         emu
     }
 

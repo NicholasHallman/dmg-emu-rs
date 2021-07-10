@@ -1,9 +1,10 @@
-use std::ops::Range;
 use std::time::Instant;
+use wasm_bindgen::prelude::*;
 
 use crate::mem::Mem;
-use crate::screen::HEIGHT;
-use crate::screen::{WIDTH};
+
+const WIDTH: u8 = 160;
+const HEIGHT: u8 = 144;
 
 const COLORS: [[u8; 4]; 4] = [
     [0xF3, 0xF0, 0xDE, 0xFF],
@@ -18,6 +19,8 @@ enum PPUMode {
     HBlank,
     VBlank
 }
+
+#[wasm_bindgen]
 pub struct Ppu {
     mode: PPUMode,
     cycles: usize,
@@ -26,9 +29,8 @@ pub struct Ppu {
     fetcher: Fetcher,
     bw_fifo: Fifo,
     ob_fifo: Fifo,
-    display_buffer: [u8; 160*144],
+    display_buffer: [u8; 160*144*4],
     x: u8,
-    pub start_time: Instant,
     pub wait_for_frame: bool,
     pub ready: bool,
 
@@ -44,10 +46,9 @@ impl Ppu {
             fetcher: Fetcher::new(),
             bw_fifo: Fifo::new(false),
             ob_fifo: Fifo::new(true),
-            display_buffer: [0; 160*144],
+            display_buffer: [0; 160*144*4],
             x: 0,
             ready: false,
-            start_time: Instant::now(),
             wait_for_frame: false,
             current_o: 0,
             total_o: 0,
@@ -74,6 +75,10 @@ impl Ppu {
 
             pixel.copy_from_slice(&rgba);
         }
+    }
+
+    pub fn get_buffer(&self) -> &[u8; 160*144*4] {
+        &self.display_buffer
     }
 
     fn prep_oam_search(&mut self, mem: &mut Mem) {
@@ -130,7 +135,7 @@ impl Ppu {
 
             let y = mem.get(0xFF44) as usize;
             let x = self.x as usize;
-            let pos: usize = (x + (y * 160)) as usize;
+            let pos: usize = ((x + (y * 160)) * 4) as usize;
             let pixel;
 
             let bw_pixel_num = (bw_pixel >> 2) & 3;
@@ -154,8 +159,11 @@ impl Ppu {
             } else {
                 pixel = bw_pixel_color;
             }
-            
-            self.display_buffer[pos] = pixel;
+            let rgba = COLORS[pixel as usize];
+            self.display_buffer[pos] = rgba[0];
+            self.display_buffer[pos+1] = rgba[1];
+            self.display_buffer[pos+2] = rgba[2];
+            self.display_buffer[pos+3] = rgba[3];
             
             self.x += 1;
         }
@@ -199,14 +207,6 @@ impl Ppu {
                 self.fetcher.reset_win();
                 mem.set_ly(0);
                 self.prep_oam_search(mem);
-
-                // keep track of elapsed time
-                let elapsed =  Instant::now() - self.start_time;
-                if elapsed.as_millis() < 16 {
-                    self.wait_for_frame = true;
-                } else {
-                    self.start_time = Instant::now();
-                }
             }
         }
     }

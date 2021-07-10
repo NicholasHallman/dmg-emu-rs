@@ -12,7 +12,7 @@ mod cpu_tests {
     use test_case::test_case;
 
     fn before(op_codes: [u8; 3]) -> Emu {
-        let mut emu = Emu::new(false);
+        let mut emu = Emu::new();
         let mut mem: [u8; 50] = [0; 50];
         mem[0] = op_codes[0];
         mem[1] = op_codes[1];
@@ -62,8 +62,8 @@ mod cpu_tests {
             _ => panic!("Can't store here")
         }
         let mut emu = before([op, 0, 0]);
-        emu.cpu.set_byte_reg(&HalfReg::A, 0x20);
-        emu.cpu.set_word_reg(&reg, 0x3020);
+        emu.cpu().set_byte_reg(&HalfReg::A, 0x20);
+        emu.cpu().set_word_reg(&reg, 0x3020);
         emu.tick_till_done();
         cascade! {
             emu.assert();
@@ -75,7 +75,7 @@ mod cpu_tests {
     fn cp_d8_should_be_equal() {
         let mut emu = before([0xFE, 0x90, 0x00]);
 
-        emu.cpu.set_byte_reg(&cpu::HalfReg::A, 0x90);
+        emu.cpu().set_byte_reg(&cpu::HalfReg::A, 0x90);
         emu.tick_till_done();
 
         cascade! {
@@ -85,11 +85,12 @@ mod cpu_tests {
             ..flag(cpu::Flag::C);..equals(false);
         };
     }
+
     #[test]
     fn cp_d8_should_not_be_equal() {
         let mut emu = before([0xFE, 0x90, 0x00]);
 
-        emu.cpu.set_byte_reg(&cpu::HalfReg::A, 0x00);
+        emu.cpu().set_byte_reg(&cpu::HalfReg::A, 0x00);
         emu.tick_till_done();
 
         cascade! {
@@ -99,5 +100,4 @@ mod cpu_tests {
             ..flag(cpu::Flag::C);..equals(true);
         };
     }
-
 }
