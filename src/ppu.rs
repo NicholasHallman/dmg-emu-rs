@@ -442,11 +442,16 @@ impl Fetcher {
 
             raw = mem.get(offset + (line * 2));
         } else {
-            let stile_num: i16 = self.tile_num as i16;
-            let index = stile_num * 16;
-            let offset: i32 = (data_addr as i32) + index as i32;
-            let offset: u16 = offset as u16;
-            raw = mem.get((offset + (line * 2)) as u16 );
+            let stile_num: i8 = self.tile_num as i8;
+            let index: i16 = (stile_num as i16) * 16;
+            let offset: u16 = {
+                if index < 0 {
+                    data_addr - (index.abs() as u16)
+                } else {
+                    data_addr + (index.abs() as u16)
+                }
+            };
+            raw = mem.get(offset + (line * 2));
         }
 
         self.data0 = 0;

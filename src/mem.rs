@@ -192,6 +192,14 @@ impl Mem {
         self.joypad.set(b, v);
     }
 
+    pub fn get_action_buttons(&self) -> u8 {
+        self.joypad.get_action()
+    }
+
+    pub fn get_arrow_buttons(&self) -> u8 {
+        self.joypad.get_arrow()
+    }
+
     pub fn tick(&mut self) {
         let overflowed = self.timer.tick();
         if overflowed {

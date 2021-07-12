@@ -74,6 +74,10 @@ impl Emu {
         clone
     }
 
+    pub fn press_button(&mut self, button: Button, value: bool) {
+        self.mem.button(button, !value);
+    }
+
     pub fn button_states(&mut self, buttons: u8) {
         let up = buttons & 1 == 1;
         let down = buttons >> 1 & 1 == 1; 
@@ -92,6 +96,14 @@ impl Emu {
         self.mem.button(Button::Down, !down);
         self.mem.button(Button::Left, !left);
         self.mem.button(Button::Right, !right);
+    }
+
+    pub fn get_action_buttons(&self) -> u8 {
+        self.mem.get_action_buttons()
+    }
+
+    pub fn get_arrow_buttons(&self) -> u8 {
+        self.mem.get_arrow_buttons()
     }
 }
 
@@ -158,9 +170,5 @@ impl Emu {
         self.cpu.tick(&mut self.mem);
         self.ppu.tick(&mut self.mem);
         self.mem.tick();
-    }
-   
-    pub fn press_button<B>(&mut self, button: B, value: bool) where B: Into<Button> {
-        self.mem.button(button.into(), value);
     }
 }
