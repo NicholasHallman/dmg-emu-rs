@@ -1,0 +1,7 @@
+import "./components/app"
+import "./components/memory"
+import "./components/program"
+import "./components/vram"
+import "./components/joypad"
+import "./components/oam"
+import "./components/emulator"

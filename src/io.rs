@@ -170,6 +170,7 @@ impl Timer {
     }
 }
 
+#[wasm_bindgen]
 pub enum Button {
     A,
     B,
@@ -243,10 +244,12 @@ impl Joypad {
         }
     }
     pub fn read(&self) -> u8 {
-        if !self.arrow_select {
-            return 0xC0 | ((!self.down) as u8) << 3 | ((!self.up) as u8) << 2 | ((!self.left) as u8) << 1 | (!self.right) as u8;
-        } else {
-            return 0xC0 | ((!self.start) as u8) << 3 | ((!self.select) as u8) << 2 | ((!self.b) as u8) << 1 | ((!self.a) as u8);
+        if self.arrow_select {
+            0xC0 | ((!self.down) as u8) << 3 | ((!self.up) as u8) << 2 | ((!self.left) as u8) << 1 | (!self.right) as u8
+        } else if self.action_select {
+            0xC0 | ((!self.start) as u8) << 3 | ((!self.select) as u8) << 2 | ((!self.b) as u8) << 1 | ((!self.a) as u8)
+        } else { 
+            0xC0 
         }
     }
 
@@ -256,7 +259,7 @@ impl Joypad {
     }
 
     pub fn set(&mut self, b: Button, state: bool) {
-        match b.into() {
+        match b {
             Button::A => self.a = state,
             Button::B => self.b = state,
             Button::Up => self.up = state,
@@ -266,5 +269,13 @@ impl Joypad {
             Button::Start => self.start = state,
             Button::Select => self.select = state,
         }
+    }
+
+    pub fn get_action(&self) -> u8 {
+        0xC0 | ((!self.start) as u8) << 3 | ((!self.select) as u8) << 2 | ((!self.b) as u8) << 1 | ((!self.a) as u8)
+    }
+
+    pub fn get_arrow(&self) -> u8 {
+        0xC0 | ((!self.down) as u8) << 3 | ((!self.up) as u8) << 2 | ((!self.left) as u8) << 1 | (!self.right) as u8
     }
 }
