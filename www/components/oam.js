@@ -3,7 +3,9 @@ import { LitElement, html, css } from "lit-element";
 class OAM extends LitElement {
 
     static get properties() {
-        return {data: {attribute: false}}
+        return {
+            data: {attribute: false}
+        }
     }
 
     static get styles() {

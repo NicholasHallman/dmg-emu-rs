@@ -10,7 +10,9 @@ class Program extends LitElement {
         return {
             data: {attribute: false},
             play: {attribute: false},
-            pc: {attribute: false}
+            pc: {attribute: false},
+            dmg: {attribute: false},
+            breakpoints: {attribute: false}
         }
     }
 
@@ -48,6 +50,10 @@ class Program extends LitElement {
                 background-color: var(--white);    /* color of the scroll thumb */
                 border-radius: 20px;       /* roundness of the scroll thumb */
             }
+
+            pre {
+                cursor: pointer;
+            }
         `
     }
 
@@ -56,29 +62,59 @@ class Program extends LitElement {
         this.play = false;
         this.pc = 0;
         this.linesBeforePC = 0;
-
+        this.breakpoints = [
+            0x0039,
+        ];
         if (!this.hasAttribute('tabindex')) {
             this.setAttribute('tabindex', 0);
         }
+        this.memChange = false;
     }
 
-    updated() {
-        super.update();
+    connectedCallback() {
+        super.connectedCallback();
+        this.dmg.update_breakpoints(this.breakpoints);
+    }
+
+    updated(changed) {
         let pWindow = this.shadowRoot.querySelector('.program');
         if (!pWindow) return;
+
         pWindow.scroll(0, (this.linesBeforePC) * LINE_HEIGHT);
     }
 
+    _handleAddBreak(e) {
+        const pre = this.shadowRoot.querySelector('pre');
+        let scrollOffset = pre.scrollTop;
+        let windowOffset = pre.offsetTop;
+        let mouseOffset = e.clientY;
+        let mouseHeight = mouseOffset - windowOffset;
+        let line = Math.floor((scrollOffset + mouseHeight) / LINE_HEIGHT)
+        let instrs = pre.innerText;
+        let chosen_instr = instrs.split('\n').filter(s => s.length > 0)[line];
+        let breakpoint = Number.parseInt(chosen_instr.split(':')[0].substr(2), 16);
+        console.log(breakpoint);
+        let existing = this.breakpoints.indexOf(breakpoint);
+        if (existing > -1) {
+            this.breakpoints.splice(existing, 1);
+            this.breakpoints = [...this.breakpoints];
+        } else {
+            this.breakpoints = [...this.breakpoints, breakpoint];
+        }
+        this.memChange = false;
+        this.dmg.update_breakpoints(this.breakpoints);
+    }
+
     render() {
-        if (this.play || this.data.length === 0) {
+        if (this.data.length === 0) {
             return html`
             <p>Program</p>
         `;
         }
-        this.decompiler(); // populates instrs
+        if (!this.play) this.decompiler(); // populates instrs
         return html`
             <p>Program</p>
-            <pre class="program">${this.instrs}</pre>
+            <pre @click=${this._handleAddBreak} class="program">${this.instrs}</pre>
         `;
     }
 
@@ -102,13 +138,17 @@ class Program extends LitElement {
         let op = this.data[pc];
         let size = this.opSize(op);
         let spc = this.hex4(pc);
-        let s;
+        let has_break = this.breakpoints.find(b => b === pc);
+        let icon = has_break ? `●` : ' ';
+
+
+        let s = icon;
         if (size === 1) {
-            s = `${spc}: ${this.opToInstr(op)}`;
+            s += ` ${spc}: ${this.opToInstr(op)}`;
         } else if (size === 2) {
-            s = `${spc}: ${this.opToInstr(op, this.data[pc + 1])}`;
+            s += ` ${spc}: ${this.opToInstr(op, this.data[pc + 1])}`;
         } else if (size === 3) {
-            s = `${spc}: ${this.opToInstr(op, this.data[pc + 1], this.data[op + 2])}`;
+            s += ` ${spc}: ${this.opToInstr(op, this.data[pc + 2], this.data[pc + 1])}`;
         }
         if (this.pc === pc) {
             let style = styleMap({

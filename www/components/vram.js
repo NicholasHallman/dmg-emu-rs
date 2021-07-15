@@ -1,5 +1,4 @@
 import { LitElement, html, css } from "lit-element";
-import Model from '../model';
 
 const WHITE = [0XFF, 0XFF, 0XFF, 0XFF];
 const LGREY = [0XAB, 0XAB, 0XAB, 0XFF];

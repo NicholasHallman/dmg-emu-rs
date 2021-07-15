@@ -1,10 +1,8 @@
 import { LitElement, html, css } from "lit-element";
-import Model from "../model";
-
 
 class Joypad extends LitElement {
     static get properties() {
-        return {data: {attribute: false}};
+        return {data: {attribute: false}, dmg: {attribute: false}};
     }
 
     static get styles() {
@@ -55,8 +53,8 @@ class Joypad extends LitElement {
     }
 
     isPressed() {
-        let action = Model.dmg.get_action_buttons();
-        let arrow = Model.dmg.get_arrow_buttons();
+        let action = this.dmg.get_action_buttons();
+        let arrow = this.dmg.get_arrow_buttons();
         return [
             action & 1,      // 0 a
             action >> 1 & 1, // 1 b 

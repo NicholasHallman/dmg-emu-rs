@@ -1,17 +1,33 @@
+import { Emu } from "dmg-emu";
 import { LitElement, html, css } from "lit-element";
-import Model from '../model.js';
 
 class App extends LitElement {
 
     static get properties() {
         return {
             play: {type: Boolean, attribute: true},
+            cpu: {attribute: false},
+            breakpoints: {attribute: false}
         }
     }
 
     static get styles() {
         return css`
+
+            .hider {
+                position: absolute;
+                right: 0px;
+                bottom: 0px;
+                padding: 20px;
+                background-color: #252731;
+            }
+
+            .show {
+                right: -20px;
+            }
+
             .debug {
+                position: relative;
                 padding: 10px 10px;
                 width: calc(calc(100vw - 100vh) - 42px);
                 height: calc(100vh - 20px);
@@ -19,6 +35,12 @@ class App extends LitElement {
                 background-color: #252731;
                 color: white;
                 overflow-y: scroll;
+                margin-left: 0px;
+                transition: margin-left .2s ease-out;
+            }
+
+            .debug.hide {
+                margin-left: calc(-1 * calc(calc(100vw - 100vh) - 42px));
             }
             .container {
                 display: flex;
@@ -65,9 +87,28 @@ class App extends LitElement {
             }
         `
     }
+    constructor() {
+        super();
+        this.mem = [];
+        
+        this.cpu = {
+            AF: 0,
+            BC: 0,
+            DE: 0,
+            HL: 0,
+            SP: 0,
+            PC: 0,
+        };
+        this.dmg = Emu.new();
+    }
 
     _handleFrame() {
-        this.requestUpdate();
+        this.mem = this.dmg.get_mem_state();
+        this.cpu = this.dmg.get_cpu_state();
+    }
+
+    _handleUpdateMemory() {
+        this.mem = this.dmg.get_mem_state();
     }
 
     formatHex(n) {
@@ -92,6 +133,7 @@ class App extends LitElement {
 
     render() {
         return html`
+        <div class="hider" @click=${() => this.shadowRoot.querySelector('.debug').classList.toggle('hide')}>🐛</div>
         <div class="container">
             <div class="debug">
                 <div class="wrap" style="margin-bottom: 10px;">
@@ -102,26 +144,34 @@ class App extends LitElement {
                 <div class="sbs">
                     <div class="wrap"> 
                         <p>Registers</p>
-                        <span>AF: ${this.formatHex(Model.cpu.AF)}</span><br>
-                        <span>BC: ${this.formatHex(Model.cpu.BC)}</span><br>
-                        <span>DE: ${this.formatHex(Model.cpu.DE)}</span><br>
-                        <span>HL: ${this.formatHex(Model.cpu.HL)}</span><br>
-                        <span>SP: ${this.formatHex(Model.cpu.SP)}</span><br>
-                        <span>PC: ${this.formatHex(Model.cpu.PC)}</span><br>
+                        <span>AF: ${this.formatHex(this.cpu.AF)}</span><br>
+                        <span>BC: ${this.formatHex(this.cpu.BC)}</span><br>
+                        <span>DE: ${this.formatHex(this.cpu.DE)}</span><br>
+                        <span>HL: ${this.formatHex(this.cpu.HL)}</span><br>
+                        <span>SP: ${this.formatHex(this.cpu.SP)}</span><br>
+                        <span>PC: ${this.formatHex(this.cpu.PC)}</span><br>
                         <p class="mid">Flags</p>
-                        <span>Z: ${Model.cpu.AF >> 7 & 1 === 1}</span>
-                        <span>N: ${Model.cpu.AF >> 6 & 1 === 1}</span><br>
-                        <span>C: ${Model.cpu.AF >> 5 & 1 === 1}</span>
-                        <span>H: ${Model.cpu.AF >> 4 & 1 === 1}</span>
+                        <span>Z: ${this.cpu.AF >> 7 & 1 === 1}</span>
+                        <span>N: ${this.cpu.AF >> 6 & 1 === 1}</span><br>
+                        <span>C: ${this.cpu.AF >> 5 & 1 === 1}</span>
+                        <span>H: ${this.cpu.AF >> 4 & 1 === 1}</span>
                     </div>
-                    <program-debug .play=${this.play} .data="${Model.mem}" .pc="${Model.cpu.PC}"></program-debug>
+                    <program-debug .play=${this.play} .data="${this.mem}" .dmg=${this.dmg} .pc="${this.cpu.PC}"></program-debug>
                 </div>
-                <memory-debug .play=${this.play} .data="${Model.mem}"></memory-debug>
-                <vram-debug .play=${this.play} .data=${Model.mem}></vram-debug>
-                <oam-debug .data=${Model.mem}></oam-debug>
-                <joypad-debug .data=${Model.mem}></joypad-debug>
+                <memory-debug .play=${this.play} .data="${this.mem}"></memory-debug>
+                <vram-debug .play=${this.play} .data=${this.mem}></vram-debug>
+                <oam-debug style="overflow-x: scroll" .data=${this.mem}></oam-debug>
+                <joypad-debug .dmg=${this.dmg} .data=${this.mem}></joypad-debug>
+                <serial-debug .buffer=${this.dmg.get_serial_buffer()}></serial-debug>
             </div>
-            <dmg-screen .play=${this.play} .step=${this.step} .stepping=${this.stepping} @frame=${this._handleFrame}></dmg-screen>
+            <dmg-screen 
+                .play=${this.play} 
+                .step=${this.step} 
+                .stepping=${this.stepping} 
+                @frame=${this._handleFrame}
+                @break=${this.handlePause}
+                @update-memory=${this._handleUpdateMemory}
+                .dmg=${this.dmg}></dmg-screen>
         </div> 
     `
     }

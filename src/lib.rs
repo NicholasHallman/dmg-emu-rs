@@ -12,11 +12,17 @@ use io::Button;
 use mem::{Mem};
 use ppu::{Ppu};
 
+enum CycleState {
+    Break,
+    Ran,
+}
+
 #[wasm_bindgen]
 pub struct Emu {
     cpu: Cpu,
     mem: Mem,
     ppu: Ppu,
+    breakpoints: Vec<u16>
 }
 
 #[wasm_bindgen]
@@ -26,6 +32,7 @@ impl Emu {
             cpu: Cpu::new(),
             mem: Mem::new(),
             ppu: Ppu::new(),
+            breakpoints: vec![]
         }
     }
 
@@ -36,18 +43,24 @@ impl Emu {
     }
 
     pub fn tick(&mut self) {
-        self.cycle();
+        self.cycle(false);
         while self.cpu.get_cycle() != 1 {
-            self.cycle();
+            self.cycle(false);
         }
     }
 
-    pub fn tick_till_frame_done(&mut self) -> u16 {
-        self.cycle();
-        while !self.ppu.ready {
-            self.cycle();
+    pub fn tick_till_frame_done(&mut self) -> bool {
+        let result = self.cycle(false);
+        if let CycleState::Break = result {
+            return false;
         }
-        self.cpu.PC
+        while !self.ppu.ready {
+            let result = self.cycle(true);
+            if let CycleState::Break = result {
+                return false;
+            }
+        }
+        true
     }
 
     pub fn get_buffer(&mut self) -> Vec<u8> {
@@ -60,6 +73,7 @@ impl Emu {
             self.mem.set(i, inst);
             i += 1;
         }
+        self.mem.lock_rom(true);
     }
 
     pub fn get_cpu_state(&self) -> DebugCpu {
@@ -104,6 +118,14 @@ impl Emu {
 
     pub fn get_arrow_buttons(&self) -> u8 {
         self.mem.get_arrow_buttons()
+    }
+
+    pub fn get_serial_buffer(&self) -> String {
+        self.mem.get_serial().get_buffer().to_owned()
+    }
+
+    pub fn update_breakpoints(&mut self, breakpoints: Vec<u16>) {
+        self.breakpoints = breakpoints;
     }
 }
 
@@ -163,12 +185,24 @@ impl Emu {
         self.mem.get_serial().get_buffer().clone()
     }
 
-    pub fn cycle(&mut self) {
+    fn cycle(&mut self, check_break: bool) -> CycleState {
+
+        if check_break && self.cpu.get_cycle() == 1 && self.breakpoints.contains(&self.cpu.PC) {
+            return CycleState::Break;
+        }
+
+        if self.cpu.current_op == 0xFF {
+            return CycleState::Break;
+        }
+
         if self.mem.transfering {
             self.mem.dma_transfer();
         }
+
         self.cpu.tick(&mut self.mem);
         self.ppu.tick(&mut self.mem);
         self.mem.tick();
+
+        return CycleState::Ran;
     }
 }

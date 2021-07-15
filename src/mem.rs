@@ -2,6 +2,15 @@
 use crate::io::{Button, Joypad, P1_ADDR, SB_ADDR, SC_ADDR, Serial, Timer, DIV_ADDR, TIMA_ADDR, TMA_ADDR, TAC_ADDR};
 use wasm_bindgen::prelude::*;
 
+extern crate web_sys;
+
+// A macro to provide `println!(..)`-style syntax for `console.log` logging.
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
+
 #[wasm_bindgen]
 
 pub struct Mem {
@@ -31,6 +40,7 @@ pub struct Mem {
     timer: Timer,
 
     pub ppu_access: bool,
+    rom_lock: bool
 
 }
 
@@ -61,7 +71,8 @@ impl Mem {
             joypad: Joypad::new(),
             timer: Timer::new(),
 
-            ppu_access: false
+            ppu_access: false,
+            rom_lock: false
         }
     }
 
@@ -77,10 +88,15 @@ impl Mem {
         &self.serial
     }
 
+    pub fn lock_rom(&mut self, lock: bool) {
+        self.rom_lock = lock;
+    }
+
     pub fn get(&self, addr: u16) -> u8 {
         if self.transfering && !self.ppu_access { // can only access high ram
             return match addr {
                 0xFF80..=0xFFFE => self.mem[addr as usize],
+                0xFF46 => self.dma,
                 _ => 0xFF
             }
         }
@@ -124,6 +140,7 @@ impl Mem {
     }
 
     pub fn set(&mut self, addr: u16, value: u8) {
+
         match addr {
             P1_ADDR => self.joypad.write(value),
             0xFF0F => self.iflag = value,
@@ -142,7 +159,8 @@ impl Mem {
             },
             0xFF46 => {
                 self.dma = value;
-                self.dma_transfer();
+                unsafe { log!("DMA < {:X}", value); }
+                if value <= 0xDF { self.dma_transfer() }
             },
             0xFF47 => self.bgp = value,
             0xFF48 => self.obp0 = value,
@@ -153,12 +171,13 @@ impl Mem {
             DIV_ADDR | TIMA_ADDR | TMA_ADDR | TAC_ADDR => self.timer.write(addr, value),
             SB_ADDR | SC_ADDR => self.serial.write(addr, value),
             0xFFFF => self.ienable = value,
+            0x0..=0x7FFF => if self.rom_lock {} else {self.mem[addr as usize] = value},
             _ => self.mem[addr as usize] = value,
         };
     }
 
     pub fn dma_transfer(&mut self) {
-        if self.transfer_count == 159 {
+        if self.transfer_count == 160 {
             self.transfer_count = 0;
             self.transfering = false;
             return;
@@ -169,11 +188,16 @@ impl Mem {
 
         let from_addr = (self.dma as u16) << 8;
         let cur_from = from_addr + self.transfer_count;
+        self.ppu_access = true;
         let value = self.get(cur_from);
+        self.ppu_access = false;
         self.set(
             cur_addr,
             value
         );
+        if cur_addr == 0xFE0A {
+            unsafe { log!("transfer {:X} > {:X} {:X} | ", cur_from, cur_addr, value); }
+        }
         self.transfer_count += 1;
         self.transfering = true;
     }

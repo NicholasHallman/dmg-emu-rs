@@ -35,8 +35,11 @@ impl Serial {
                 if value == 0x81 {
                     if self.SB == 0x0A || self.buffer_pos == 99 { // newline
                         let out: String = self.buffer.iter().collect();
-                        println!("Serial: {}", out);
-                        self.string_buffer += out.as_str();
+                        if self.string_buffer.len() > 0 {
+                            self.string_buffer = format!("{}\n{}", self.string_buffer, out.trim().to_string());
+                        } else {
+                            self.string_buffer = out.trim().to_string();
+                        }
 
                         self.buffer_pos = 0;
                         self.buffer = [' '; 100];
