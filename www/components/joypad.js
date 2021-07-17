@@ -16,7 +16,6 @@ class Joypad extends LitElement {
                 margin-top: 10px;
                 width: calc(100% - 10px);
                 grid-template-areas:
-                    "title . . . . ."
                     ". up . . . a"
                     "left . right . b ."
                     ". down . . . ."
@@ -70,7 +69,6 @@ class Joypad extends LitElement {
     render() {
         let pressed = this.isPressed();
         return html`
-            <p>Joypad</p>
             <div style="grid-area: up;"     class="${pressed[6] ? 'pressed' : ''} button">⬆</div>
             <div style="grid-area: left;"   class="${pressed[5] ? 'pressed' : ''} button">⬅</div>
             <div style="grid-area: right;"  class="${pressed[4] ? 'pressed' : ''} button">➡</div>

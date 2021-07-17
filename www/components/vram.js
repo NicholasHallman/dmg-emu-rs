@@ -92,7 +92,6 @@ class VRAM extends LitElement {
 
     render() {
         return html`
-            <p>VRAM</p>
             <canvas width="192" height="128"></canvas>
         `
     }

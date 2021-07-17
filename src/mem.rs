@@ -88,6 +88,10 @@ impl Mem {
         &self.serial
     }
 
+    pub fn get_timer(&self) -> Timer {
+        self.timer.clone()
+    }
+
     pub fn lock_rom(&mut self, lock: bool) {
         self.rom_lock = lock;
     }

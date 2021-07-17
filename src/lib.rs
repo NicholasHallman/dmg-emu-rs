@@ -8,7 +8,7 @@ use std::{fs};
 use wasm_bindgen::prelude::*;
 
 use cpu::{Cpu, DebugCpu};
-use io::Button;
+use io::{Button, Timer};
 use mem::{Mem};
 use ppu::{Ppu};
 
@@ -86,6 +86,10 @@ impl Emu {
             clone[i as usize] = self.mem.get(i);
         }
         clone
+    }
+
+    pub fn get_timer_state(&self) -> Timer {
+        self.mem.get_timer()
     }
 
     pub fn press_button(&mut self, button: Button, value: bool) {

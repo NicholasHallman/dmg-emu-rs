@@ -77,10 +77,10 @@ pub const TAC_ADDR: u16 = 0xFF07;
 
 #[wasm_bindgen]
 pub struct Timer {
-    DIV: u8,
-    TIMA: u8,
-    TMA: u8,
-    TAC: u8,
+    pub DIV: u8,
+    pub TIMA: u8,
+    pub TMA: u8,
+    pub TAC: u8,
     div_clock: u32,
     tim_clock: u32,
     overflowed: bool
@@ -151,9 +151,9 @@ impl Timer {
 
     pub fn tick(&mut self) -> bool {
         self.overflowed = false;
-        //self.tick_div();
+        self.tick_div();
         if self.timer_enabled() { 
-            //self.tick_tima() 
+            self.tick_tima() 
         }
         self.overflowed
     }
@@ -169,6 +169,18 @@ impl Timer {
             2 => 65536 / 4,
             3 => 16384 / 4,
             _ => unreachable!()
+        }
+    }
+
+    pub fn clone(&self) -> Timer {
+        Self {
+            DIV: self.DIV,
+            TIMA: self.TIMA,
+            TMA: self.TMA,
+            TAC: self.TAC,
+            div_clock: 0,
+            tim_clock: 0,
+            overflowed: false,
         }
     }
 }

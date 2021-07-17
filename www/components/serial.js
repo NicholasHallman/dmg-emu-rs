@@ -33,7 +33,6 @@ class Serial extends LitElement {
 
     render() {
         return html`
-            <p>Serial</p>
             <pre>${this.buffer}</pre>
         `
     }

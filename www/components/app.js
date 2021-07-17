@@ -7,7 +7,8 @@ class App extends LitElement {
         return {
             play: {type: Boolean, attribute: true},
             cpu: {attribute: false},
-            breakpoints: {attribute: false}
+            breakpoints: {attribute: false},
+            show_debug: {attribute: false}
         }
     }
 
@@ -16,10 +17,12 @@ class App extends LitElement {
 
             .hider {
                 position: absolute;
-                right: 0px;
-                bottom: 0px;
+                right: 5px;
+                bottom: 5px;
                 padding: 20px;
                 background-color: #252731;
+                border-radius: 10px;
+                cursor: pointer;
             }
 
             .show {
@@ -45,6 +48,13 @@ class App extends LitElement {
             .container {
                 display: flex;
             }
+
+            @media (orientation: portrait) {
+                .container {
+                    flex-direction: column;
+                }  
+            }
+
             .sbs {
                 display: flex;
             }
@@ -90,6 +100,7 @@ class App extends LitElement {
     constructor() {
         super();
         this.mem = [];
+        this.show_debug = true;
         
         this.cpu = {
             AF: 0,
@@ -131,10 +142,43 @@ class App extends LitElement {
         this.shadowRoot.querySelector('dmg-screen').handleStep();
     }
 
+    handleHide() {
+        if (this.show_debug){
+            this.shadowRoot.querySelector('.debug').classList.toggle('hide');
+            setTimeout(() => {
+                this.show_debug = !this.show_debug;
+            }, 200)
+        } else {
+            this.show_debug = !this.show_debug;
+        }
+    }
+
+    _renderVideo() {
+        const titles = ["VRAM", "OAM"];
+        const elements = [
+            html`<vram-debug .play=${this.play} .data=${this.mem}></vram-debug>`, 
+            html`<oam-debug .play=${this.play} .data=${this.mem}></oam-debug>`
+        ];
+        return html`
+            <tabbed-card .titles=${titles} .elements=${elements}></tabbed-card>
+        `
+    }
+
+    _renderIo() {
+        const titles = ["Serial", "Joypad", "Timer"];
+        const elements = [    
+            html`<serial-debug .buffer=${this.dmg.get_serial_buffer()}></serial-debug>`,
+            html`<joypad-debug .dmg=${this.dmg} .data=${this.mem}></joypad-debug>`,
+            html`<timer-debug .timerIO=${this.dmg.get_timer_state()}></timer-debug>`
+        ]
+        return html`<tabbed-card .titles=${titles} .elements=${elements}></tabbed-card>`;
+    }
+
     render() {
         return html`
-        <div class="hider" @click=${() => this.shadowRoot.querySelector('.debug').classList.toggle('hide')}>🐛</div>
+        <div class="hider" @click=${this.handleHide}>🐛</div>
         <div class="container">
+            ${ this.show_debug ? html`
             <div class="debug">
                 <div class="wrap" style="margin-bottom: 10px;">
                     <button @click="${this.handlePlay}">▶️</button>
@@ -159,11 +203,10 @@ class App extends LitElement {
                     <program-debug .play=${this.play} .data="${this.mem}" .dmg=${this.dmg} .pc="${this.cpu.PC}"></program-debug>
                 </div>
                 <memory-debug .play=${this.play} .data="${this.mem}"></memory-debug>
-                <vram-debug .play=${this.play} .data=${this.mem}></vram-debug>
-                <oam-debug style="overflow-x: scroll" .data=${this.mem}></oam-debug>
-                <joypad-debug .dmg=${this.dmg} .data=${this.mem}></joypad-debug>
-                <serial-debug .buffer=${this.dmg.get_serial_buffer()}></serial-debug>
+                ${this._renderIo()}
+                ${this._renderVideo()}
             </div>
+            ` : ''}
             <dmg-screen 
                 .play=${this.play} 
                 .step=${this.step} 
