@@ -1,5 +1,7 @@
 
 use crate::io::{Button, Joypad, P1_ADDR, SB_ADDR, SC_ADDR, Serial, Timer, DIV_ADDR, TIMA_ADDR, TMA_ADDR, TAC_ADDR};
+use crate::apu::APU;
+use crate::mbc::{MBCBuilder, MBC};
 use wasm_bindgen::prelude::*;
 
 extern crate web_sys;
@@ -38,9 +40,11 @@ pub struct Mem {
     serial: Serial,
     joypad: Joypad,
     timer: Timer,
+    apu: APU,
 
     pub ppu_access: bool,
-    rom_lock: bool
+    rom_lock: bool,
+    mbc: Box<dyn MBC>
 
 }
 
@@ -70,9 +74,11 @@ impl Mem {
             serial: Serial::new(),
             joypad: Joypad::new(),
             timer: Timer::new(),
+            apu: APU::new(),
 
             ppu_access: false,
-            rom_lock: false
+            rom_lock: false,
+            mbc: Box::new(MBCBuilder::undefined())
         }
     }
 
@@ -124,7 +130,10 @@ impl Mem {
             
             DIV_ADDR | TIMA_ADDR | TMA_ADDR | TAC_ADDR => self.timer.read(addr),
             SB_ADDR | SC_ADDR => self.serial.read(addr),
+            0xFF10..=0xFF3F => self.apu.read(addr),
             0xE000 ..= 0xFDFF => self.mem[(addr - 0x200) as usize],
+            0xA000..=0xBFFF => self.mbc.read(addr),
+            0x0000..=0x7FFF => self.mbc.read(addr),
             0x0000 ..= 0xFFFE => self.mem[addr as usize],
             _ => 0xFF
         }
@@ -163,7 +172,6 @@ impl Mem {
             },
             0xFF46 => {
                 self.dma = value;
-                unsafe { log!("DMA < {:X}", value); }
                 if value <= 0xDF { self.dma_transfer() }
             },
             0xFF47 => self.bgp = value,
@@ -174,8 +182,10 @@ impl Mem {
 
             DIV_ADDR | TIMA_ADDR | TMA_ADDR | TAC_ADDR => self.timer.write(addr, value),
             SB_ADDR | SC_ADDR => self.serial.write(addr, value),
+            0xFF10..=0xFF3F => self.apu.write(addr, value),
             0xFFFF => self.ienable = value,
-            0x0..=0x7FFF => if self.rom_lock {} else {self.mem[addr as usize] = value},
+            0xA000..=0xBFFF => self.mbc.write(addr, value),
+            0x0000..=0x7FFF => self.mbc.write(addr, value),
             _ => self.mem[addr as usize] = value,
         };
     }
@@ -199,9 +209,6 @@ impl Mem {
             cur_addr,
             value
         );
-        if cur_addr == 0xFE0A {
-            unsafe { log!("transfer {:X} > {:X} {:X} | ", cur_from, cur_addr, value); }
-        }
         self.transfer_count += 1;
         self.transfering = true;
     }
@@ -229,9 +236,20 @@ impl Mem {
     }
 
     pub fn tick(&mut self) {
+        self.apu.tick();
         let overflowed = self.timer.tick();
         if overflowed {
             self.mem[0xFF0F as usize] = self.mem[0xFF0F as usize] & 4;
         }
+    }
+
+    pub fn load_cart(&mut self, rom: Vec<u8>) {
+        let mut mbc = MBCBuilder::get_mbc_from_header(rom[0x0147], rom[0x0148], rom[0x0149]);
+        mbc.load_cart(rom);
+        self.mbc = mbc;
+    }
+
+    pub fn get_audio_buffers(&self) -> [&[u8; 735]; 4] {
+        self.apu.get_shared_buffer()
     }
 }

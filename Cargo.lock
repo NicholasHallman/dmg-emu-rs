@@ -40,6 +40,7 @@ version = "0.1.0"
 dependencies = [
  "cascade",
  "console_error_panic_hook",
+ "js-sys",
  "test-case",
  "wasm-bindgen",
  "wasm-bindgen-test",

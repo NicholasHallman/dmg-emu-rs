@@ -3,6 +3,8 @@ pub mod mem;
 pub mod cpu;
 pub mod ppu;
 pub mod io;
+pub mod mbc;
+pub mod apu;
 
 use std::{fs};
 use wasm_bindgen::prelude::*;
@@ -50,7 +52,7 @@ impl Emu {
     }
 
     pub fn tick_till_frame_done(&mut self) -> bool {
-        let result = self.cycle(false);
+        let result = self.cycle(true);
         if let CycleState::Break = result {
             return false;
         }
@@ -68,11 +70,7 @@ impl Emu {
     }
 
     pub fn load_rom_data(&mut self, rom: Vec<u8>) {
-        let mut i = 0;
-        for inst in rom {
-            self.mem.set(i, inst);
-            i += 1;
-        }
+        self.mem.load_cart(rom);
         self.mem.lock_rom(true);
     }
 
@@ -129,7 +127,11 @@ impl Emu {
     }
 
     pub fn update_breakpoints(&mut self, breakpoints: Vec<u16>) {
-        self.breakpoints = breakpoints;
+        self.breakpoints = breakpoints; 
+    } 
+
+    pub fn get_audio_channel1(&self) -> Vec<u8> {
+        self.mem.get_audio_buffers()[0].to_vec()
     }
 }
 
@@ -192,10 +194,6 @@ impl Emu {
     fn cycle(&mut self, check_break: bool) -> CycleState {
 
         if check_break && self.cpu.get_cycle() == 1 && self.breakpoints.contains(&self.cpu.PC) {
-            return CycleState::Break;
-        }
-
-        if self.cpu.current_op == 0xFF {
             return CycleState::Break;
         }
 

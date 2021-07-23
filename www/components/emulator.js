@@ -49,6 +49,8 @@ class DMGScreen extends LitElement {
         if (!this.hasAttribute('tabindex')) {
             this.setAttribute('tabindex', 0);
         }
+
+        this.audioCtx = new AudioContext();
     }
 
     handleKeyDown(e) {
@@ -120,6 +122,21 @@ class DMGScreen extends LitElement {
         event.preventDefault();
     }
 
+    emulateAudio() {
+        let buffer = this.audioCtx.createBuffer(2, 44100 / 60, 44100);
+
+        var channelR = buffer.getChannelData(0);
+        var channelL = buffer.getChannelData(1);
+        let data = this.dmg.get_audio_channel1;
+        channelR.set(data);
+        channelL.set(data);
+
+        var source = this.audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.audioCtx.destination);
+        source.start();
+    }
+
     start() {
         this.dmg.init();
 
@@ -134,6 +151,8 @@ class DMGScreen extends LitElement {
             }
 
             let finished_frame = this.dmg.tick_till_frame_done();
+
+            
             if (!finished_frame) {
                 this.justPaused = true;
                 this.dispatchEvent((new CustomEvent('break')));
@@ -141,6 +160,9 @@ class DMGScreen extends LitElement {
             let screen = new Uint8ClampedArray(this.dmg.get_buffer());
             let data = new ImageData(screen, 160, 144);
             this.ctx.putImageData(data, 0, 0);
+
+            //this.emulateAudio();
+
             this.dispatchEvent((new CustomEvent('frame')));
 
             this.justPaused = true;

@@ -75,19 +75,20 @@ pub const TIMA_ADDR: u16 = 0xFF05;
 pub const TMA_ADDR: u16 = 0xFF06;
 pub const TAC_ADDR: u16 = 0xFF07;
 
+const DIV_TICK: u32 = 16384;
+
 #[wasm_bindgen]
 pub struct Timer {
-    pub DIV: u8,
+    pub DIV: u16,
     pub TIMA: u8,
     pub TMA: u8,
     pub TAC: u8,
-    div_clock: u32,
-    tim_clock: u32,
-    overflowed: bool
+    overflowed: bool,
+    last_edge: u16
 }
 
 const FREQUENCY: u32 = 4_194_304;
-const CYCLE: u32 = 4;
+const CYCLE: u16 = 4;
 
 impl Timer {
     pub fn new() -> Self {
@@ -96,9 +97,8 @@ impl Timer {
             TIMA: 0,
             TMA: 0,
             TAC: 0,
-            div_clock: 0,
-            tim_clock: 0,
-            overflowed: false
+            overflowed: false,
+            last_edge: 0,
         }
     }
 
@@ -109,7 +109,6 @@ impl Timer {
             TMA_ADDR => self.TMA = value,
             TAC_ADDR => {
                 self.TAC = value;
-                self.tim_clock = 0;
             },
             _ => panic!("Timer does not exist at this address")
         }
@@ -117,7 +116,7 @@ impl Timer {
 
     pub fn read(&self, addr: u16) -> u8 {
         match addr {
-            DIV_ADDR => self.DIV,
+            DIV_ADDR => (self.DIV >> 8) as u8,
             TIMA_ADDR => self.TIMA,
             TMA_ADDR => self.TMA,
             TAC_ADDR => self.TAC,
@@ -126,48 +125,42 @@ impl Timer {
     }
 
     fn tick_div(&mut self) {
-        self.div_clock += CYCLE;
-        if self.div_clock == 255 {
-            self.div_clock = 0;
-            self.DIV = self.DIV.overflowing_add(1).0;
-        }
+        self.DIV = self.DIV.wrapping_add(CYCLE as u16);
     }
 
     fn tick_tima(&mut self) {
-        let interval = self.control();
-        self.tim_clock += CYCLE;
-        if self.tim_clock == interval {
-            self.tim_clock = 0;
+        let significant_bit = self.control();
+        let enabled_bit = self.timer_enabled();
+        let current_edge = (self.DIV >> significant_bit) & enabled_bit;
+        if self.last_edge == 1 && current_edge == 0 {
             let (result, overflow) = self.TIMA.overflowing_add(1);
             if overflow {
-                // interupt 
-                self.overflowed = true;
                 self.TIMA = self.TMA;
             } else {
                 self.TIMA = result;
             }
+            self.overflowed = overflow;
         }
+        self.last_edge = current_edge;
     }
 
     pub fn tick(&mut self) -> bool {
         self.overflowed = false;
         self.tick_div();
-        if self.timer_enabled() { 
-            self.tick_tima() 
-        }
+        self.tick_tima();
         self.overflowed
     }
 
-    fn timer_enabled(&self) -> bool {
-        self.TAC >> 2 & 1 == 1
+    fn timer_enabled(&self) -> u16 {
+        (self.TAC >> 2 & 1) as u16
     }
 
     fn control(&self) -> u32 {
         match self.TAC & 3 {
-            0 => 4096 / 4,
-            1 => 262144 / 4,
-            2 => 65536 / 4,
-            3 => 16384 / 4,
+            0 => 9,
+            1 => 3,
+            2 => 5,
+            3 => 7,
             _ => unreachable!()
         }
     }
@@ -178,9 +171,8 @@ impl Timer {
             TIMA: self.TIMA,
             TMA: self.TMA,
             TAC: self.TAC,
-            div_clock: 0,
-            tim_clock: 0,
             overflowed: false,
+            last_edge: 0,
         }
     }
 }

@@ -63,7 +63,7 @@ class Program extends LitElement {
         this.pc = 0;
         this.linesBeforePC = 0;
         this.breakpoints = [
-            0x0039,
+            0x0100,
         ];
         if (!this.hasAttribute('tabindex')) {
             this.setAttribute('tabindex', 0);
@@ -148,7 +148,7 @@ class Program extends LitElement {
         } else if (size === 2) {
             s += ` ${spc}: ${this.opToInstr(op, this.data[pc + 1])}`;
         } else if (size === 3) {
-            s += ` ${spc}: ${this.opToInstr(op, this.data[pc + 2], this.data[pc + 1])}`;
+            s += ` ${spc}: ${this.opToInstr(op, this.data[pc + 1], this.data[pc + 2])}`;
         }
         if (this.pc === pc) {
             let style = styleMap({
